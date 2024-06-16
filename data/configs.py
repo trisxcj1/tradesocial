@@ -3,7 +3,7 @@ STOCK_TICKERS_DICT = {
     'MSFT': 'Microsoft Corporation',
     'AMZN': 'Amazon.com Inc.',
     'GOOGL': 'Alphabet Inc. (Google)',
-    'FB': 'Meta Platforms Inc. (Facebook)',
+    'META': 'Meta Platforms Inc. (Facebook)',
     'TSLA': 'Tesla Inc.',
     'NVDA': 'NVIDIA Corporation',
     'NFLX': 'Netflix Inc.',
