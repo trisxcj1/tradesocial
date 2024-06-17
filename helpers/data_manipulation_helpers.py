@@ -22,7 +22,7 @@ class DataManipulationHelpers():
         self,
         ticker,
         start_date=None,
-        end_date='yesterday'
+        end_date='most recent trading day'
     ):
         """
         """
@@ -30,13 +30,38 @@ class DataManipulationHelpers():
         
         if end_date in ['', 'yesterday', 'y']:
             end_date = today + relativedelta(days=-1)
-        
+            
+        if end_date in ['most recent trading day']:
+            end_date = today + relativedelta(days=-1)
+            day_of_week = end_date.weekday()
+            
+            if day_of_week == 0:
+                end_date = end_date + relativedelta(days=-3)
+            elif day_of_week == 6:
+                end_date = end_date + relativedelta(days=-2)
+            elif day_of_week == 5:
+                end_date = end_date + relativedelta(days=-1)
+            
         if start_date in ['', None]:
             start_date = end_date + relativedelta(days=-30)
         
         if start_date in ['', 'yesterday', 'y']:
             start_date = today + relativedelta(days=-1)
+            
+        if start_date in ['most recent trading day']:
+            start_date = today + relativedelta(days=-1)
+            day_of_week = start_date.weekday()
+            
+            if day_of_week == 0:
+                start_date = start_date + relativedelta(days=-3)
+            elif day_of_week == 6:
+                start_date = start_date + relativedelta(days=-2)
+            elif day_of_week == 5:
+                start_date = start_date + relativedelta(days=-1)
         
+        if start_date == end_date:
+            end_date = start_date + relativedelta(days=1)
+            
         df = yf.download(ticker, start=start_date, end=end_date)
         df['ticker'] = [ticker] * len(df)
         return df
@@ -104,7 +129,7 @@ class DataManipulationHelpers():
             columns=['Date', 'Close', 'ticker']
         )
         
-        for ticker in all_stocks[:20]:
+        for ticker in all_stocks:
             ticker_df = self.get_ystock_data_over_time(
                 ticker
             )

@@ -29,5 +29,9 @@ tradesocial_pages_mapping = {
 tradesocial_pages_menu_items = list(tradesocial_pages_mapping.keys())
 
 # displaying the selected page
-selected_page = st.sidebar.selectbox('Menu', tradesocial_pages_menu_items)
+with st.sidebar:
+    st.markdown("# TradeSocial 💸")
+    st.markdown('---')
+    selected_page = st.selectbox('Menu', tradesocial_pages_menu_items)
+    
 tradesocial_pages_mapping[selected_page]()

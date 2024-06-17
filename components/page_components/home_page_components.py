@@ -47,8 +47,7 @@ def calculate_my_portfolio_metrics(portfolio=portfolio):
             
             current_stock_data = dmh__i.get_ystock_data_over_time(
                 ticker,
-                start_date='2024-06-13', # TODO: make this better
-                end_date='2024-06-14' # TODO: make this better
+                start_date='most recent trading day'
             )
             current_stock_data = current_stock_data[['ticker', 'Close']]
             current_stock_data.rename(columns={'Close': 'current_price'}, inplace=True)
@@ -99,9 +98,6 @@ def generate_my_portfolio_section():
         title=f"Breakdown of Current Portfolio Value"
     )
     st.plotly_chart(fig, use_container_width=True)
-
-def return_updated_data(df):
-    return df
 
 def generate_update_my_portfolio_section():
     st.markdown("### Update My Portfolio")
