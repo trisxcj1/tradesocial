@@ -90,7 +90,77 @@ class DataManipulationHelpers():
         flattened_portfolio['current_value'] = flattened_portfolio['total_quantity'] * flattened_portfolio['current_price']
         
         return flattened_portfolio
+    
+    def calculate_recommended_stocks(
+        self,
+        risk_level
+    ):
+        """
+        """
+        # risk_level = risk_level/10
+        all_stocks = list(STOCK_TICKERS_DICT.keys())
         
+        stocks_df = pd.DataFrame(
+            columns=['Date', 'Close', 'ticker']
+        )
+        
+        for ticker in all_stocks[:20]:
+            ticker_df = self.get_ystock_data_over_time(
+                ticker
+            )
+            ticker_df.reset_index(inplace=True)
+            ticker_df.rename(columns={'index': 'Date'}, inplace=True)
+            ticker_df = ticker_df[['Date', 'Close', 'ticker']]
+            stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
+        
+        stocks_df['pct_change'] = stocks_df.groupby('ticker')['Close'].pct_change()
+        risk_df = (
+            stocks_df
+            .groupby('ticker')
+            .agg(
+                volatility = pd.NamedAgg('pct_change', 'std')
+            )
+            .reset_index()
+        )
+        min_volatility = risk_df['volatility'].min()
+        max_volatility = risk_df['volatility'].max()
+        risk_df['normalized_volatility'] = 10 * (risk_df['volatility'] - min_volatility) / (max_volatility - min_volatility)
+        risk_df = risk_df.sort_values('normalized_volatility', ascending=False)
+        
+        gain_df = self.calculate_percentage_gain(stocks_df)
+        
+        if risk_level <= 4:
+            recommended_stocks = (
+                list(risk_df[risk_df['normalized_volatility']<=risk_level]
+                .head(5)
+                ['ticker'])
+            )
+        
+        elif (risk_level > 4) and (risk_level < 8):
+            recommended_stocks = (
+                list(risk_df[
+                    (risk_df['normalized_volatility']>4) &
+                    (risk_df['normalized_volatility']<8)
+                ]
+                .head(5)
+                ['ticker'])
+            )
+        
+        else:
+            recommended_stocks = (
+                list(risk_df[risk_df['normalized_volatility']>=risk_level]
+                .head(5)
+                ['ticker'])
+            )
+            
+        return {
+            'recommended_stocks': recommended_stocks,
+            'recent_gain': gain_df
+        }
+            
+            
+            
+            
             
             
             

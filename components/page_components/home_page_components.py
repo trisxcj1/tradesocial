@@ -65,8 +65,6 @@ def calculate_my_portfolio_metrics(portfolio=portfolio):
     portfolio_value_df = dmh__i.calculate_portfolio_value(portfolio_value_df)
     return portfolio_value_df
 
-# portfolio_value_df = calculate_my_portfolio_metrics()
-
 def generate_my_portfolio_section():
     """
     """
@@ -123,5 +121,38 @@ def generate_update_my_portfolio_section():
             if ticker in portfolio:
                 portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})
             else:
-                portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]          
+                portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
+
+def generate_for_you_section():
+    """
+    """
+    st.markdown("## For You")
+    st.markdown('---')
+    
+    risk_level = st.slider(
+        'Select your risk level:',
+        min_value=1,
+        max_value=10,
+        value=1,
+        step=1
+    )
+    recommendation_dict = dmh__i.calculate_recommended_stocks(risk_level)
+    recommended_stocks = recommendation_dict['recommended_stocks']
+    gains_df = recommendation_dict['recent_gain']
+    
+    placeholder = st.empty()
+    with placeholder.container():
+        columns = st.columns(len(recommended_stocks))
+        
+        for i, ticker in enumerate(recommended_stocks):
+            stock_df = gains_df[gains_df['ticker']==ticker]
+            
+            current_price = list(stock_df['Close'])[0]
+            pct_change = list(stock_df['pct_change'])[0]
+            
+            columns[i].metric(
+                label=f"{ticker}",
+                value=f"${current_price:,.2f}",
+                delta=f"{pct_change:,.2f}% DoD",
+            )
                 

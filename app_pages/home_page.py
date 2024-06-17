@@ -3,7 +3,8 @@ import streamlit as st
 
 from components.page_components.home_page_components import (
     generate_my_portfolio_section,
-    generate_update_my_portfolio_section
+    generate_update_my_portfolio_section,
+    generate_for_you_section
 )
 
 
@@ -25,6 +26,6 @@ def generate_home_page():
     st.markdown('---')
     generate_update_my_portfolio_section()
     generate_my_portfolio_section()
-    # generate_update_my_portfolio_section()
     
     # For You
+    generate_for_you_section()
