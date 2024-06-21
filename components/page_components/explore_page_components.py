@@ -105,6 +105,8 @@ def generate_browse_and_compare_section(
 ):
     """
     """
+    st.markdown("### Performance Over Time")
+    
     stocks_df = pd.DataFrame(
         columns=['Date', 'Close', 'ticker']
     )
@@ -116,6 +118,7 @@ def generate_browse_and_compare_section(
         ticker_df = ticker_df[['Date', 'Close', 'ticker']]
         stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
     
+    # performance over time
     fig = px.line(
         stocks_df,
         x='Date',
@@ -128,3 +131,21 @@ def generate_browse_and_compare_section(
         }
     )
     st.plotly_chart(fig)
+    
+    # more like this
+    st.markdown("### More Like This")
+    st.markdown('---')
+    
+    all_similarities_df = dmh__i.calculate_similarity()
+    more_like_this = []
+    
+    for ticker in stocks_to_view:
+        similar_stocks = list(all_similarities_df[ticker].sort_values(ascending=False).index[1:4])
+        more_like_this = more_like_this + similar_stocks
+    
+    more_like_this = list(dict.fromkeys(more_like_this))
+    more_like_this = [x for x in more_like_this if x not in stocks_to_view]
+    
+    for s in more_like_this:
+        st.write(f"#### `{STOCK_TICKERS_DICT[s]} ({s})`")
+        

@@ -36,6 +36,7 @@ def generate_explore_page():
     st.markdown('---')
     stocks_to_view = st.multiselect('Search Stocks', stock_tickers)
     
+    # search and compare
     if stocks_to_view:
         generate_browse_and_compare_section(
             stocks_to_view

@@ -1,10 +1,16 @@
 # ----- Imports -----
 import pandas as pd
+import numpy as np
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import yfinance as yf
+
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import StandardScaler
+
+from scipy.spatial.distance import cdist
 
 from data.configs import STOCK_TICKERS_DICT
 
@@ -122,7 +128,6 @@ class DataManipulationHelpers():
     ):
         """
         """
-        # risk_level = risk_level/10
         all_stocks = list(STOCK_TICKERS_DICT.keys())
         
         stocks_df = pd.DataFrame(
@@ -182,7 +187,63 @@ class DataManipulationHelpers():
             'recommended_stocks': recommended_stocks,
             'recent_gain': gain_df
         }
+        
+    def calculate_similarity(
+        self
+    ):
+        """
+        """
+        scaler = StandardScaler()
+        all_stocks = list(STOCK_TICKERS_DICT.keys())
+        
+        stocks_df = pd.DataFrame(
+            columns=['Date', 'Close', 'ticker']
+        )
+        
+        for ticker in all_stocks:
+            ticker_df = self.get_ystock_data_over_time(
+                ticker
+            )
+            ticker_df.reset_index(inplace=True)
+            ticker_df.rename(columns={'index': 'Date'}, inplace=True)
+            ticker_df = ticker_df[['Date', 'Close', 'ticker']]
+            stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
             
+        stocks_df['Date'] = pd.to_datetime(stocks_df['Date'])
+        stocks_df['pct_change'] = stocks_df.groupby('ticker')['Close'].pct_change()
+        stocks_df.dropna(subset=['pct_change'], inplace=True)
+        
+        stocks_df['features'] = list(
+            zip(
+                stocks_df['Close'],
+                stocks_df['pct_change']
+            )
+        )
+        
+        grouped_features = stocks_df.groupby('ticker')['features'].apply(list)
+        
+        normalized_features = {}
+        for ticker, features in grouped_features.items():
+            normalized_features[ticker] = scaler.fit_transform(features)
+
+        normalized_features_list = [normalized_features[ticker] for ticker in all_stocks]
+        reshaped_features = [feat.flatten() for feat in normalized_features_list]
+        
+        similarity_matrix = cosine_similarity(
+            np.array(
+                reshaped_features
+            )
+        )
+        similarity_df = pd.DataFrame(
+            similarity_matrix,
+            columns=grouped_features.keys(),
+            index=grouped_features.keys()
+        )
+        return similarity_df
+        
+        
+        
+        
             
             
             
