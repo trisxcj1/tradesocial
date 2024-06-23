@@ -162,7 +162,7 @@ class DataManipulationHelpers():
         if risk_level <= 4:
             recommended_stocks = (
                 list(risk_df[risk_df['normalized_volatility']<=risk_level]
-                .head(5)
+                .head(4)
                 ['ticker'])
             )
         
@@ -172,14 +172,14 @@ class DataManipulationHelpers():
                     (risk_df['normalized_volatility']>4) &
                     (risk_df['normalized_volatility']<8)
                 ]
-                .head(5)
+                .head(4)
                 ['ticker'])
             )
         
         else:
             recommended_stocks = (
                 list(risk_df[risk_df['normalized_volatility']>=risk_level]
-                .head(5)
+                .head(4)
                 ['ticker'])
             )
             

@@ -198,4 +198,3 @@ STOCK_TICKERS_DICT.update({
     # 'ZBH': 'Zimmer Biomet Holdings Inc.',
     # 'ZBRA': 'Zebra Technologies Corporation'
 })
-

@@ -7,9 +7,11 @@ import plotly.graph_objs as go
 import plotly.express as px
 
 from helpers.data_manipulation_helpers import DataManipulationHelpers
+from helpers.llm_helpers import LLMHelpers
 from data.configs import STOCK_TICKERS_DICT
 
 dmh__i = DataManipulationHelpers()
+llmh__i = LLMHelpers()
 
 # ----- TradeSocial Explore Page Components -----
 
@@ -110,6 +112,7 @@ def generate_browse_and_compare_section(
     stocks_df = pd.DataFrame(
         columns=['Date', 'Close', 'ticker']
     )
+    recent_news_df = pd.DataFrame()
     
     for ticker in stocks_to_view:
         ticker_df = dmh__i.get_ystock_data_over_time(ticker)
@@ -117,6 +120,8 @@ def generate_browse_and_compare_section(
         ticker_df.rename(columns={'index': 'Date'}, inplace=True)
         ticker_df = ticker_df[['Date', 'Close', 'ticker']]
         stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
+        recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 3)])
+        
     
     # performance over time
     fig = px.line(
@@ -131,6 +136,18 @@ def generate_browse_and_compare_section(
         }
     )
     st.plotly_chart(fig)
+    
+    # recent news 
+    if len(recent_news_df) > 0:
+        st.markdown("### Recent News")
+        st.markdown('---')
+        for ticker in stocks_to_view:
+            st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
+            headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
+            urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
+            for i in range(len(headlines)):
+                st.text(f"Headline: {headlines[i]}")
+                st.markdown(f"- Click [here to read more]({urls[i]})")
     
     # more like this
     st.markdown("### More Like This")
