@@ -24,7 +24,11 @@ def generate_home_page():
     # My portfolio
     st.markdown('## My Portfolio')
     st.markdown('---')
-    generate_update_my_portfolio_section()
+    
+    update_my_portfolio = st.toggle('Update My Portfolio')
+    if update_my_portfolio:
+        generate_update_my_portfolio_section()
+        
     generate_my_portfolio_section()
     
     # For You
