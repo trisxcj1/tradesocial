@@ -120,7 +120,7 @@ def generate_browse_and_compare_section(
         ticker_df.rename(columns={'index': 'Date'}, inplace=True)
         ticker_df = ticker_df[['Date', 'Close', 'ticker']]
         stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
-        recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 3)])
+        recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 4)])
         
     
     # performance over time
@@ -145,6 +145,14 @@ def generate_browse_and_compare_section(
             st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
             headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
             urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
+            articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
+            
+            info_to_summarize = "\n\n".join([f"#### {headline}\n\n{body}" for headline, body in zip(headlines, articles)])
+            summary = llmh__i.summarize_articles(info_to_summarize)['text']
+            
+            st.markdown('> Summary')
+            st.markdown(f"{summary}")
+            
             for i in range(len(headlines)):
                 st.text(f"Headline: {headlines[i]}")
                 st.markdown(f"- Click [here to read more]({urls[i]})")
