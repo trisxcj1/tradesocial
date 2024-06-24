@@ -17,12 +17,61 @@ dmh__i = DataManipulationHelpers()
 
 # TODO: improve
 portfolio = {
-    'AAPL': [{'quantity': 5, 'transaction_date': '2024-01-03'}, {'quantity': 7, 'transaction_date': '2024-02-02'}],
-    'GOOGL': [{'quantity': 5, 'transaction_date': '2022-06-15'}],
-    'MSFT': [{'quantity': 8, 'transaction_date': '2022-06-16'}]
+    'AAPL': [{'quantity': 1, 'transaction_date': '2024-03-05'}],
+    'GME': [{'quantity': 1, 'transaction_date': '2024-05-14'}],
+    'META': [{'quantity': 1, 'transaction_date': '2024-04-26'}],
+    'CMG': [{'quantity': 1, 'transaction_date': '2024-05-20'}],
+    'QQQ': [{'quantity': 1, 'transaction_date': '2024-06-07'}],
+    'UL': [{'quantity': 1, 'transaction_date': '2024-06-06'}],
+    'RDDT': [{'quantity': 1, 'transaction_date': '2024-03-26'}],
+    'GOOGL': [{'quantity': 5, 'transaction_date': '2024-06-15'}],
+    'MSFT': [{'quantity': 1, 'transaction_date': '2024-03-12'}],
+    'NVDA': [{'quantity': 3, 'transaction_date': '2024-03-05'}],
+    'GOOG': [{'quantity': 1, 'transaction_date': '2024-05-29'}],
+    'TSLA': [{'quantity': 2, 'transaction_date': '2024-03-05'}],
+    'PANW': [{'quantity': 1, 'transaction_date': '2024-03-06'}],
 }
 
 # TODO: move to data manipulation helpers
+def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
+    portfolio_value_df = pd.DataFrame(
+        columns=['Date', 'ticker', 'Close', 'quantity_owned']
+    )
+    
+    for ticker in portfolio:
+        ticker_df = pd.DataFrame(
+            columns=['Date', 'ticker', 'Close', 'quantity_owned']
+        )
+        
+        for transaction in portfolio[ticker]:
+            transaction_date = transaction['transaction_date']
+            stock_data = dmh__i.get_ystock_data_over_time(
+                ticker,
+                transaction_date
+            )
+            stock_data.reset_index(inplace=True)
+            stock_data.rename(columns={'index': 'Date'}, inplace=True)
+            stock_data = stock_data[['Date', 'ticker', 'Close']]
+            stock_data['quantity_owned'] = [transaction['quantity']] * len(stock_data)
+            
+            ticker_df = pd.concat([ticker_df, stock_data], ignore_index=True)
+            
+            # need to agg by date to account for additional stock purchased
+            ticker_df = (
+                ticker_df
+                .groupby(['Date', 'ticker', 'Close'])
+                .agg(
+                    quantity_owned = pd.NamedAgg('quantity_owned', 'sum')
+                )
+                .reset_index()
+                .sort_values('Date', ascending=False)
+            )
+            
+        portfolio_value_df = pd.concat([portfolio_value_df, ticker_df], ignore_index=True)
+    
+    portfolio_value_df['current_value'] = portfolio_value_df['quantity_owned'] * portfolio_value_df['Close']
+    return portfolio_value_df
+       
 def calculate_my_portfolio_metrics(portfolio=portfolio):
     portfolio_value_df = pd.DataFrame(
         columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
@@ -69,6 +118,8 @@ def generate_my_portfolio_section():
     """
     st.markdown("### My Portfolio Value")
     
+    portfolio_over_time = calculate_my_portfolio_metrics_over_time()
+    
     portfolio_value_df = calculate_my_portfolio_metrics()
     portfolio_value_df = (
         portfolio_value_df[portfolio_value_df['current_value']>0]    
@@ -87,17 +138,38 @@ def generate_my_portfolio_section():
     portfolio_pct_change = (
         round(100 * (current_portfolio_value - initial_portfolio_value)/initial_portfolio_value, 2)
     )
-    
-    # line_color = 'green' if pct_gain >=0 else 'red'
+
     gain_sign = '+' if portfolio_pct_change >=0 else '-'
 
-    st.markdown(f"### Current Portfolio Value: ${current_portfolio_value:,.2f} ({gain_sign}{portfolio_pct_change}%)")    
-    fig = px.pie(
-        values=portfolio_value_df['current_value'],
-        names=portfolio_value_df['ticker'],
-        title=f"Breakdown of Current Portfolio Value"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    if len(portfolio_over_time) > 0:
+        st.markdown(f"### Current Portfolio Value: ${current_portfolio_value:,.2f} ({gain_sign}{portfolio_pct_change}%)")
+        
+        portfolio_agg_level = st.toggle('Show Portfolio Distribution', key='ShowPortfolioDistribution_on_Home')
+        show_distribution = True if portfolio_agg_level else False
+        
+        if show_distribution:
+            fig = px.pie(
+                values=portfolio_value_df['current_value'],
+                names=portfolio_value_df['ticker'],
+                title=f"Breakdown of Current Portfolio Value"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+        else:
+            fig = px.line(
+                portfolio_over_time,
+                x='Date',
+                y='current_value',
+                color='ticker',
+                title=f"My Portfolio Over Time",
+                labels={
+                    'current_value': 'Value ($)',
+                    'ticker': 'Stock Ticker'
+                }
+            )
+            st.plotly_chart(fig)
+    else:
+        st.markdown('`Buy shares in a stock to grow your portfolio! Check out the Explore Page.`')
 
 def generate_update_my_portfolio_section():
     st.markdown("### Update My Portfolio")
@@ -108,7 +180,6 @@ def generate_update_my_portfolio_section():
         quantity = st.number_input('Quantity', min_value=1)
         transaction_date = st.date_input('Transaction Date', min_value=datetime(2000, 1, 1))
         transaction_type = st.selectbox('Transaction Type', ['Buy', 'Sell'])
-        # submit_button = st.form_submit_button(label='Update Portfolio', key='update_portfolio_button_on_home')
         submit_button = st.form_submit_button(label='Update Portfolio')
         
         if submit_button:

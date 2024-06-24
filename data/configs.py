@@ -35,7 +35,7 @@ STOCK_TICKERS_DICT = {
     'GME': 'Gamestop',
     'UL': 'Unilever',
     'CMG': 'Chipotle',
-    'RDDT': 'Reddit',
+    'RDDT': 'Reddit Inc',
     'CART': 'Instacart (Maplebear Inc)'
 }
 STOCK_TICKERS_DICT.update({
@@ -75,6 +75,7 @@ STOCK_TICKERS_DICT.update({
     'IBM': 'International Business Machines Corporation',
     'ISRG': 'Intuitive Surgical Inc.',
     'JNJ': 'Johnson & Johnson',
+    'QQQ': 'Invesco QQQ ETF',
     # 'KHC': 'The Kraft Heinz Company',
     # 'LIN': 'Linde plc',
     # 'LMT': 'Lockheed Martin Corporation',
