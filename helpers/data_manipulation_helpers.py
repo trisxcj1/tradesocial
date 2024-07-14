@@ -12,6 +12,8 @@ from sklearn.preprocessing import StandardScaler
 
 from scipy.spatial.distance import cdist
 
+from statsmodels.tsa.seasonal import seasonal_decompose
+
 from data.configs import STOCK_TICKERS_DICT
 
 # ----- DataManipulationHelpers -----
@@ -240,6 +242,79 @@ class DataManipulationHelpers():
             index=grouped_features.keys()
         )
         return similarity_df
+    
+    def calculate_ts_decomposition(
+        self,
+        data,
+        ticker,
+        decomp_value='Close'
+    ):
+        """
+        """
+        # setting Date as the index if not already done
+        # if 'Date' in data.columns:
+        #     data = data.set_index('Date')
+        data = data[data['ticker']==ticker]
+        data_by_date = data.set_index('Date')
+        data_by_date = data_by_date.sort_index()
+        
+        decomposition = seasonal_decompose(
+            data_by_date[decomp_value],
+            model='multiplicative',
+            period=252
+        )
+        return decomposition
+    
+    def generate_sesonality_information(
+        self,
+        decomposition
+    ):
+        """
+        """
+        crossings = []
+        days_between_crossings = []
+        seasonal = decomposition.seasonal
+        seasonal_mean = seasonal.mean()
+        
+        seasonal_df = seasonal.reset_index()
+        seasonal_df['month'] = seasonal_df['Date'].dt.month
+        seasonal_df['year'] = seasonal_df['Date'].dt.year
+        
+        typical_peak_month = (
+            seasonal_df
+            .groupby('year')
+            .apply(lambda x: x.loc[x['seasonal'].idxmax()]['month'])[:-1].mean()
+        )
+        typical_trough_month = (
+            seasonal_df
+            .groupby('year')
+            .apply(lambda x: x.loc[x['seasonal'].idxmin()]['month'])[:-1].mean()
+        )
+        
+        for i in range(1, len(seasonal)):
+            if (
+                ((seasonal[i-1] < seasonal_mean) and (seasonal[i] > seasonal_mean)) or
+                ((seasonal[i-1] > seasonal_mean) and (seasonal[i] < seasonal_mean))
+            ):
+                crossings.append(seasonal.index[i])
+        
+        for i in range(1, len(crossings)):
+            days_between = (crossings[i] - crossings[i-1]).days
+            if days_between > 62:
+                days_between_crossings.append(days_between)
+        
+        
+        
+        estimated_cycle_length = (np.mean(days_between_crossings)) * 2
+        output = {
+            'seasonal_mean': seasonal_mean,
+            'typical_peak_month': typical_peak_month + 0.001,
+            'typical_trough_month': typical_trough_month + 0.001,
+            'estimated_cycle_length': estimated_cycle_length
+        }
+        return output
+        
+        
         
         
         

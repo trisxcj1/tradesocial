@@ -1,6 +1,6 @@
 # ----- Imports -----
 import pandas as pd
-
+from datetime import datetime
 import streamlit as st
 
 import plotly.graph_objs as go
@@ -8,12 +8,16 @@ import plotly.express as px
 
 from helpers.data_manipulation_helpers import DataManipulationHelpers
 from helpers.llm_helpers import LLMHelpers
+from helpers.plotting_helpers import PlottingHelpers
 from data.configs import STOCK_TICKERS_DICT
 
 dmh__i = DataManipulationHelpers()
 llmh__i = LLMHelpers()
+ph__i = PlottingHelpers()
 
 # ----- TradeSocial Explore Page Components -----
+
+today = datetime.today()
 
 def generate_todays_top_gainers_section(
     gainers_list,
@@ -115,47 +119,138 @@ def generate_browse_and_compare_section(
     recent_news_df = pd.DataFrame()
     
     for ticker in stocks_to_view:
-        ticker_df = dmh__i.get_ystock_data_over_time(ticker)
+        ticker_df = dmh__i.get_ystock_data_over_time(ticker, start_date='2020-06-10')
         ticker_df.reset_index(inplace=True)
         ticker_df.rename(columns={'index': 'Date'}, inplace=True)
         ticker_df = ticker_df[['Date', 'Close', 'ticker']]
         stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
         recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 4)])
-        
     
-    # performance over time
-    fig = px.line(
-        stocks_df,
-        x='Date',
-        y='Close',
-        color='ticker',
-        title='Stock Price Over Time',
-        labels={
-            'Close': 'Price ($)',
-            'ticker': 'Stock'
-        }
-    )
-    st.plotly_chart(fig)
+    if len(stocks_to_view)==1:
+        # plotting time series decomp
+        stock_ts_decomp = dmh__i.calculate_ts_decomposition(stocks_df, stocks_to_view[0])
+        st.plotly_chart(ph__i.plot_stock_decomposition(stock_ts_decomp, stocks_to_view[0]))
+        
+        cycle_information = dmh__i.generate_sesonality_information(stock_ts_decomp)
+        typical_peak_month, typical_trough_month = cycle_information['typical_peak_month'], cycle_information['typical_trough_month']
+        current_month = today.month
+        high_month_before_low_month = typical_peak_month < typical_trough_month
+        
+        # good times to buy
+        if (high_month_before_low_month) and ((current_month < typical_peak_month) or (current_month > typical_trough_month)):
+            if current_month < typical_peak_month:    
+                st.write(
+                    f"""
+                    Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated peak period
+                    for this year, which means that value of the stock is expected to increase. 
+                    
+                    Therefore, if you `buy or long`
+                    `{stocks_to_view[0]}` today, you should expect to the value of your portfolio to increase over time while
+                    you own the stock.
+                    """
+                )
+            if current_month > typical_trough_month:    
+                st.write(
+                    f"""
+                    Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period
+                    for this year, which means that value of the stock is expected to increase. 
+                    
+                    Therefore, if you `buy or long`
+                    `{stocks_to_view[0]}` today, you should expect to the value of your portfolio to increase over time while
+                    you own the stock.
+                    """
+                )
+        if (~high_month_before_low_month) and ((current_month > typical_trough_month) and (current_month < typical_peak_month)):
+            st.write(
+                f"""
+                Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period for the year,
+                which means that the value of the stock is expected to increase.
+                
+                Therefore, if you `buy or long` `{stocks_to_view[0]}` today, 
+                you should expect the value of your portfolio to increase over time while you own the stock.
+                """
+            )
+                
+        # good times to sell         
+        if (high_month_before_low_month) and ((current_month > typical_peak_month) and (current_month < typical_trough_month)):
+            st.write(
+                f"""
+                Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
+                for this year and is approaching it's estimated low period, which means that value of the stock is
+                expected to decrease.
+                
+                Therefore, if you `sell or short` `{stocks_to_view[0]}` today, you should expect
+                to the minimize any losses you might incur from owning this stock, and the value of your portfolio would
+                at least remain the same or even increase.
+                """
+            )
+    
+        if (~high_month_before_low_month) and ((current_month < typical_trough_month) or (current_month > typical_peak_month)):
+            if current_month < typical_trough_month:
+                st.write(
+                    f"""
+                    Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated low period
+                    for this year, which means that value of the stock is expected to decrease.
+                    
+                    Therefore, if you `sell or short`
+                    `{stocks_to_view[0]}` today, you should expect to the minimize any losses you might incur from owning this stock,
+                    and the value of your portfolio would at least remain the same or even increase over time.
+                    """
+                )
+            if current_month > typical_peak_month:
+                st.write(
+                    f"""
+                    Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
+                    for this year, which means that value of the stock is expected to decrease.
+                    
+                    Therefore, if you `sell or short`
+                    `{stocks_to_view[0]}` today, you should expect to the minimize any losses you might incur from owning this stock, 
+                    and the value of your portfolio would at least remain the same or even increase over time.
+                    """
+                )
+        else:
+            st.write(f"IDK MAN!! Current month: {current_month}, High: {typical_peak_month}, Low: {typical_trough_month}")
+        
+    else:
+        # plotting performance over time
+        fig = px.line(
+            stocks_df,
+            x='Date',
+            y='Close',
+            color='ticker',
+            title='Stock Price Over Time',
+            labels={
+                'Close': 'Price ($)',
+                'ticker': 'Stock'
+            }
+        )
+        st.plotly_chart(fig)
     
     # recent news 
-    if len(recent_news_df) > 0:
-        st.markdown("### Recent News")
-        st.markdown('---')
-        for ticker in stocks_to_view:
-            st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
-            headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
-            urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
-            articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
+    # if len(recent_news_df) > 0:
+    #     st.markdown("### Recent News")
+    #     st.markdown('---')
+    #     for ticker in stocks_to_view:
+    #         st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
+    #         headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
+    #         urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
+    #         articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
             
-            info_to_summarize = "\n\n".join([f"#### {headline}\n\n{body}" for headline, body in zip(headlines, articles)])
-            summary = llmh__i.summarize_articles(info_to_summarize)['text']
+    #         info_to_summarize = "\n\n".join([f"#### {headline}\n\n{body}" for headline, body in zip(headlines, articles)])
+    #         summary = llmh__i.summarize_articles(info_to_summarize)['text']
             
-            st.markdown('> Summary')
-            st.markdown(f"{summary}")
+    #         st.markdown('> Summary')
+    #         st.markdown(f"{summary}")
             
-            for i in range(len(headlines)):
-                st.text(f"Headline: {headlines[i]}")
-                st.markdown(f"- Click [here to read more]({urls[i]})")
+    #         for i in range(len(headlines)):
+    #             st.text(f"Headline: {headlines[i]}")
+    #             st.markdown(f"- Click [here to read more]({urls[i]})")
     
     # more like this
     st.markdown("### More Like This")
