@@ -78,5 +78,3 @@ class PlottingHelpers():
         fig.update_yaxes(title_text='Trend', row=2, col=1)
         fig.update_yaxes(title_text='Cyclical Behavior', row=3, col=1)
         return fig
-        
-        

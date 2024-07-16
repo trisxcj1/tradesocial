@@ -31,5 +31,5 @@ def generate_home_page():
 
     generate_my_portfolio_section()
     
-    # For You
+    # For You (Currently YMAL)
     generate_for_you_section()

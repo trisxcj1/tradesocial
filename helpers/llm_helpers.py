@@ -51,51 +51,6 @@ class LLMHelpers():
         
     )
     
-    # article_summary_prompt_template = PromptTemplate(
-    #     input_variables=['articles'],
-    #     template="""
-    #     ### Instruction:
-    #     You are an investment expert who is tryig to help retail investors understand what
-    #     is happening within the stock market. These retail investors are not industry experts
-    #     and they are not expected to have a background in finance.
-        
-    #     You are the read the following articles and
-    #     provide a very short summary about the articles.
-        
-    #     If there are multiple articles, do not provide a summary for each.
-    #     Just provide a single short summary.
-        
-    #     This summary should be short! No more than 80 words.
-        
-    #     Remember, keep it short and to the point. Only provide a summary and do not elaborate on points.
-        
-    #     ### Articles:
-    #     {articles}
-    #     """
-    # )
-    article_summary_prompt_template = PromptTemplate(
-        input_variables=['articles'],
-        template="""
-        ### Instruction:
-        You are to read the following articles and provide a single, short,
-        concise but informative summary about the articles in 30 words or less.
-        
-        If there are multiple articles, do not provide a summary for each.
-        Just provide a single, short, concise but informative summary about the articles.
-        
-        This summary must be no more than 30 words.
-        
-        Remember, keep it short and to the point. Only provide a summary and do not elaborate on points.
-        
-        If the summary is longer than 30 words, you must rewrite it to fit within the word limit.
-        
-        Keep it short!
-        
-        ### Articles:
-        {articles}
-        """
-    )
-    
     def __init__(self):
         """
         """
@@ -195,4 +150,3 @@ class LLMHelpers():
             summary_cleaned
         )
         return summary_sentence_case
-        

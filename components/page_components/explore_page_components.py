@@ -16,7 +16,6 @@ llmh__i = LLMHelpers()
 ph__i = PlottingHelpers()
 
 # ----- TradeSocial Explore Page Components -----
-
 today = datetime.today()
 months_mapping = {
     1: 'January',
@@ -256,11 +255,6 @@ def generate_browse_and_compare_section(
             and the estimated low period is {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]}
             """
         )
-        # st.write(f"> Estimated low period: {when_is_trough_period_occurring} {months_mapping[typical_trough_month_whole]}")
-        # typical_peak_month_whole = int(typical_peak_month)
-        # typical_peak_month_remainder = typical_peak_month - typical_peak_month_whole
-        # else:
-        #     st.write(f"IDK MAN!! Current month: {current_month}, High: {typical_peak_month}, Low: {typical_trough_month}")
         
     else:
         # plotting performance over time
@@ -313,4 +307,3 @@ def generate_browse_and_compare_section(
     
     for s in more_like_this:
         st.write(f"#### `{STOCK_TICKERS_DICT[s]} ({s})`")
-        

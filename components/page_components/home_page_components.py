@@ -205,8 +205,11 @@ def generate_for_you_section():
         step=1
     )
     recommendation_dict = dmh__i.calculate_recommended_stocks(risk_level)
+    risk_msg = recommendation_dict['risk_msg']
     recommended_stocks = recommendation_dict['recommended_stocks']
     gains_df = recommendation_dict['recent_gain']
+    
+    st.write(f"{risk_msg}")
     
     placeholder = st.empty()
     with placeholder.container():
@@ -223,4 +226,3 @@ def generate_for_you_section():
                 value=f"${current_price:,.2f}",
                 delta=f"{pct_change:,.2f}% DoD",
             )
-                

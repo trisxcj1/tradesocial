@@ -162,6 +162,13 @@ class DataManipulationHelpers():
         gain_df = self.calculate_percentage_gain(stocks_df)
         
         if risk_level <= 4:
+            risk_msg = """
+            Given your risk level, here are a few stocks that have relatively low volatility.
+            Low volatility means that the stock price for these companies change over time, but
+            the difference in day-to-day change is relatively consistent over time. These stocks
+            should allow you to minimize risk as much as possible, while still allowing you to increase
+            the value of your portfolio. 
+            """
             recommended_stocks = (
                 list(risk_df[risk_df['normalized_volatility']<=risk_level]
                 .head(4)
@@ -177,6 +184,12 @@ class DataManipulationHelpers():
                 .head(4)
                 ['ticker'])
             )
+            risk_msg = """
+            Given your risk level, here's a blend of stocks that offer a mix of volatility.
+            Volatility means that the stock price for these companies change over time, and the magnitude
+            of these changes can also be quite different. These stocks offer you the opportunity to capitalize
+            on favorable uncertainty in the market, while still being relatively conservative.
+            """
         
         else:
             recommended_stocks = (
@@ -184,8 +197,16 @@ class DataManipulationHelpers():
                 .head(4)
                 ['ticker'])
             )
+            risk_msg = """
+            Given your risk level, here's a list of stocks that have high volatility.
+            High volatility means that the stock price for these companies experience big swings day-to-day,
+            and these stocks carry relatively high risk. These stocks give you a high chance of winning big since
+            high risks means high rewards. Remember that risk works both ways. Therefore, if you can win big, you can
+            also lose big.
+            """
             
         return {
+            'risk_msg': risk_msg,
             'recommended_stocks': recommended_stocks,
             'recent_gain': gain_df
         }
@@ -313,20 +334,3 @@ class DataManipulationHelpers():
             'estimated_cycle_length': estimated_cycle_length
         }
         return output
-        
-        
-        
-        
-        
-        
-            
-            
-            
-            
-            
-            
-            
-        
-            
-        
-        
