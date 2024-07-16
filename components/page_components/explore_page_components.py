@@ -18,6 +18,20 @@ ph__i = PlottingHelpers()
 # ----- TradeSocial Explore Page Components -----
 
 today = datetime.today()
+months_mapping = {
+    1: 'January',
+    2: 'February',
+    3: 'March',
+    4: 'April',
+    5: 'May',
+    6: 'June',
+    7: 'July',
+    8: 'August',
+    9: 'September',
+    10: 'October',
+    11: 'November',
+    12: 'December'
+}
 
 def generate_todays_top_gainers_section(
     gainers_list,
@@ -133,6 +147,13 @@ def generate_browse_and_compare_section(
         
         cycle_information = dmh__i.generate_sesonality_information(stock_ts_decomp)
         typical_peak_month, typical_trough_month = cycle_information['typical_peak_month'], cycle_information['typical_trough_month']
+        
+        typical_peak_month_whole = int(typical_peak_month)
+        typical_peak_month_remainder = typical_peak_month - typical_peak_month_whole
+        
+        typical_trough_month_whole = int(typical_trough_month)
+        typical_trough_month_remainder = typical_trough_month - typical_trough_month_whole
+        
         current_month = today.month
         high_month_before_low_month = typical_peak_month < typical_trough_month
         
@@ -214,8 +235,32 @@ def generate_browse_and_compare_section(
                     and the value of your portfolio would at least remain the same or even increase over time.
                     """
                 )
+                
+        if typical_peak_month_remainder <= 0.25:
+            when_is_peak_period_occurring = "Early"
+        elif (typical_peak_month_remainder > 0.25) and (typical_peak_month_remainder < 0.75):
+            when_is_peak_period_occurring = "Mid"
         else:
-            st.write(f"IDK MAN!! Current month: {current_month}, High: {typical_peak_month}, Low: {typical_trough_month}")
+            when_is_peak_period_occurring = "Late"
+            
+        if typical_trough_month_remainder <= 0.25:
+            when_is_trough_period_occurring = "Early"
+        elif (typical_trough_month_remainder > 0.25) and (typical_trough_month_remainder < 0.75):
+            when_is_trough_period_occurring = "Mid"
+        else:
+            when_is_trough_period_occurring = "Late"
+            
+        st.write(
+            f"""
+            > The estimated peak period is {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
+            and the estimated low period is {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]}
+            """
+        )
+        # st.write(f"> Estimated low period: {when_is_trough_period_occurring} {months_mapping[typical_trough_month_whole]}")
+        # typical_peak_month_whole = int(typical_peak_month)
+        # typical_peak_month_remainder = typical_peak_month - typical_peak_month_whole
+        # else:
+        #     st.write(f"IDK MAN!! Current month: {current_month}, High: {typical_peak_month}, Low: {typical_trough_month}")
         
     else:
         # plotting performance over time
