@@ -4,6 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 import html
 
+import tensorflow
+from transformers import pipeline, TFAutoModelForSeq2SeqLM, AutoTokenizer
+
+import re
+
 import litellm
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -36,6 +41,14 @@ class LLMHelpers():
         model='mistral',
         callback_manager = CallbackManager([StreamingStdOutCallbackHandler()]),
         temperature=0.9
+    )
+    summarization_model_name = "t5-small"
+    summarization_pipeline = pipeline(
+        "summarization",
+        model=TFAutoModelForSeq2SeqLM.from_pretrained(summarization_model_name, from_pt=True),
+        tokenizer=AutoTokenizer.from_pretrained(summarization_model_name),
+        framework='tf'
+        
     )
     
     # article_summary_prompt_template = PromptTemplate(
@@ -146,7 +159,7 @@ class LLMHelpers():
             article_soup = BeautifulSoup(article_response.content, 'html.parser')
             article_headline = self.extract_headline_from_soup(article_soup)
             
-            if ("No headline found" not in article_headline):
+            if ("No headline found" not in article_headline) and ("We've detected unusual activity from your computer network" not in article_headline):
                 article_urls = article_urls + [article_url]
                 article_headlines = article_headlines + [article_headline]
                 
@@ -167,10 +180,19 @@ class LLMHelpers():
     ):
         """
         """
-        llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self.article_summary_prompt_template
+        summary_list = self.summarization_pipeline(
+            articles,
+            min_length=10,
+            max_length=75,
+            do_sample=False
         )
-        response = llm_chain(articles)
-        return response
+        summary_text = summary_list[0]['summary_text']
+        summary_cleaned = ' '.join(summary_text.split())
+        
+        summary_sentence_case = re.sub(
+            r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s",
+            lambda m: m.group(0).capitalize(),
+            summary_cleaned
+        )
+        return summary_sentence_case
         
