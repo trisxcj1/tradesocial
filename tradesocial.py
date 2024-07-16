@@ -12,7 +12,6 @@ st.set_page_config(page_title='TradeSocial 💸')
 
 # creating a manu for users to tab between pages
 tradesocial_pages_mapping = {
-    'Explore': generate_explore_page,
     'Home': generate_home_page,
     'Explore': generate_explore_page,
     'Community': generate_unknown_page,

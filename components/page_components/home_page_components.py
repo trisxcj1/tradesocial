@@ -193,7 +193,8 @@ def generate_update_my_portfolio_section():
 def generate_for_you_section():
     """
     """
-    st.markdown("## For You")
+    # st.markdown("## For You")
+    st.markdown("## You Might Also Like")
     st.markdown('---')
     
     risk_level = st.slider(
