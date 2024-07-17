@@ -51,11 +51,106 @@ class LLMHelpers():
         
     )
     
+    ama_prompt_template = PromptTemplate(
+        input_variables=['history', 'input'],
+        template="""
+        ### Instruction:
+        TradeSocial is a personalized stock trading app that combines investment insights with various
+        social networking features. Users can use TradeSocial to discover, connect, and invest smarter
+        with a community-driven approach to stock trading. 
+        
+        You are an investment expert and assistant for the TradeSocial platform
+        and you are trying to help non-expert and potentially
+        new investors learn more about the stock market and how to invest. Read the prompt
+        below and continue the conversation with the most appropriate response.
+        
+        Try your best not not to use too much financial jargon if it is not needed.
+        
+        All responses MUST be related to the stock market, finance, or investing, and must
+        be less than 200 words.
+        
+        If you identify that the user is speficially asking about what stocks they should trade,
+        respond to the user telling them to use TradeSocial's Explore Page.
+        
+        ### Conversation history:
+        {history}
+        
+        ### Prompt:
+        {input}
+        """
+    )
+    classify_ama_user_input_prompt_template = PromptTemplate(
+        input_variables=['history', 'input'],
+        template="""
+        ### Task:
+        You are to determine user intent and classify a user's prompt
+        into one of the following categories.
+        
+        1. Identify the user's intent:
+        - If the user is asking about what stocks specifically to trade:
+            - Response: "Specific question"
+        
+        - If the user is asking you to give them suggestions on what companies to trade:
+            - Response: "Specific question"
+        
+        - If the user wants to know what to buy or sell:
+            - Response: "Specific question"
+        
+        - If the user asking about anything else:
+            - Response: "General question"
+        
+        ### Instruction:
+        Read the user prompt and the conversation history, and then complete the task above.
+        Think through what exactly the user is asking before you provide your classification.
+        In your response, it should only be one from the options provided above -- 
+        either "Specific question" or "General question".
+        
+        ### Conversation history:
+        {history}
+        
+        ### Prompt:
+        {input}
+        """
+    )
+    
     def __init__(self):
         """
         """
         pass
     
+    def generate_ama_classification(
+        self,
+        input_message,
+        conversation_memory
+    ):
+        """
+        """
+        conversation_chain = LLMChain(
+            llm=self.llm,
+            prompt=self.classify_ama_user_input_prompt_template,
+            memory=conversation_memory,
+            verbose=True
+        )
+        llm_response = conversation_chain(input_message)
+        return llm_response
+    
+    def generate_ama_llm_response(
+        self,
+        input_message,
+        conversation_memory
+    ):
+        """
+        """
+        conversation_chain = LLMChain(
+            llm=self.llm,
+            prompt=self.ama_prompt_template,
+            memory=conversation_memory,
+            verbose=True
+        )
+        llm_response = conversation_chain(input_message)
+        return llm_response
+        
+        
     def extract_headline_from_soup(
         self,
         soup
@@ -138,7 +233,7 @@ class LLMHelpers():
         summary_list = self.summarization_pipeline(
             articles,
             min_length=10,
-            max_length=75,
+            max_length=150,
             do_sample=False
         )
         summary_text = summary_list[0]['summary_text']

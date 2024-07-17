@@ -202,7 +202,7 @@ class DataManipulationHelpers():
             High volatility means that the stock price for these companies experience big swings day-to-day,
             and these stocks carry relatively high risk. These stocks give you a high chance of winning big since
             high risks means high rewards. Remember that risk works both ways. Therefore, if you can win big, you can
-            also lose big.
+            also lose big -- never invest more than you're willing to lose.
             """
             
         return {
