@@ -1,3 +1,5 @@
+USER_RISK_LEVEL = 5
+
 STOCK_TICKERS_DICT = {
     'AAPL': 'Apple Inc.',
     'MSFT': 'Microsoft Corporation',
@@ -36,7 +38,9 @@ STOCK_TICKERS_DICT = {
     'UL': 'Unilever',
     'CMG': 'Chipotle',
     'RDDT': 'Reddit Inc',
-    'CART': 'Instacart (Maplebear Inc)'
+    'CART': 'Instacart (Maplebear Inc)',
+    'UBER': 'Uber Technologies',
+    'DASH': 'DoorDash Inc'
 }
 STOCK_TICKERS_DICT.update({
     'BA': 'The Boeing Company',

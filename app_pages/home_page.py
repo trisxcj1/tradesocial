@@ -4,7 +4,8 @@ import streamlit as st
 from components.page_components.home_page_components import (
     generate_my_portfolio_section,
     generate_update_my_portfolio_section,
-    generate_for_you_section
+    generate_fy_section,
+    generate_ymal_section
 )
 
 
@@ -31,5 +32,11 @@ def generate_home_page():
 
     generate_my_portfolio_section()
     
-    # For You (Currently YMAL)
-    generate_for_you_section()
+    # Buys For You
+    generate_fy_section()
+    
+    # YMAL
+    generate_ymal_section()
+    
+    # Recommended Sells
+    generate_fy_section(False)

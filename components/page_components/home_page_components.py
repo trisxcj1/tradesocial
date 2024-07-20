@@ -9,7 +9,11 @@ import plotly.graph_objs as go
 import plotly.express as px
 
 from helpers.data_manipulation_helpers import DataManipulationHelpers
-from data.configs import STOCK_TICKERS_DICT
+from data.configs import (
+    USER_RISK_LEVEL,
+    STOCK_TICKERS_DICT
+)
+
 
 dmh__i = DataManipulationHelpers()
 
@@ -190,21 +194,93 @@ def generate_update_my_portfolio_section():
             else:
                 portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
 
-def generate_for_you_section():
+def generate_fy_section(
+    fy_buys=True
+    # should also be based on risk level or something
+):
     """
     """
-    # st.markdown("## For You")
+    recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks'] # risk level is not currently being used
+    
+    if fy_buys:
+        section_header = 'Recommended Buys For You'
+        fy_msg = """
+        Based on your interests and current industry trends, here are a few
+        recommended buys for you!
+        
+        If you purchase these stocks today and 
+        hold them for at least 3 months, the value of your portfolio is 
+        expected to increase 🚀
+        """
+        
+        fy = recommendations['buys']
+        direction_label = 'Increase'
+        
+    else:
+        section_header = 'Recommended Shorts or Sells'
+        fy_msg = """
+        The following stocks are expected to lose value within the next 3 months.
+        
+        If you short or sell these stocks today, you can minimize the risk of
+        any losses you might incur from owning these stocks.
+        """
+        
+        fy = recommendations['sells']
+        direction_label = 'Decrease'
+        
+    st.markdown(f"## {section_header}")
+    st.markdown('---')
+    
+    st.write(fy_msg)
+    
+    recommended_stocks = list(
+        fy
+        .head(4)
+        ['ticker']
+    )
+    placeholder = st.empty()
+    with placeholder.container():
+        columns = st.columns(len(recommended_stocks))
+        
+        for i, ticker in enumerate(recommended_stocks):
+            stock_df = fy[fy['ticker']==ticker]
+            
+            current_price = list(stock_df['Close'])[0]
+            probability = round(100 * (list(stock_df['probability'])[0]), 0)
+            if fy_buys == False:
+                color = "inverse"
+            else:
+                color = "normal"
+            
+            columns[i].metric(
+                label=f"{ticker}",
+                value=f"${current_price:,.2f}",
+                delta=f"{direction_label} Socre: {probability}",
+                delta_color = color
+            )
+    return recommended_stocks # thinking about how to dedupe between FY and YMAL
+
+def generate_ymal_section(
+    user_risk_level=USER_RISK_LEVEL
+):
+    """
+    """
     st.markdown("## You Might Also Like")
     st.markdown('---')
     
-    risk_level = st.slider(
-        'Select your risk level:',
-        min_value=1,
-        max_value=10,
-        value=1,
-        step=1
-    )
-    recommendation_dict = dmh__i.calculate_recommended_stocks(risk_level)
+    change_risk_level = st.toggle('Change my risk level', key='ChangeRiskLevel_on_Home')
+    if change_risk_level:
+        risk_level = st.slider(
+            'Select your risk level:',
+            min_value=1,
+            max_value=10,
+            value=1,
+            step=1
+        )
+    else:
+        risk_level = user_risk_level
+        
+    recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(risk_level)
     risk_msg = recommendation_dict['risk_msg']
     recommended_stocks = recommendation_dict['recommended_stocks']
     gains_df = recommendation_dict['recent_gain']
