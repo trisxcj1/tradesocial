@@ -28,7 +28,7 @@ portfolio = {
     'QQQ': [{'quantity': 1, 'transaction_date': '2024-06-07'}],
     'UL': [{'quantity': 1, 'transaction_date': '2024-06-06'}],
     'RDDT': [{'quantity': 1, 'transaction_date': '2024-03-26'}],
-    'GOOGL': [{'quantity': 5, 'transaction_date': '2024-06-15'}],
+    # 'GOOGL': [{'quantity': 5, 'transaction_date': '2024-06-15'}],
     'MSFT': [{'quantity': 1, 'transaction_date': '2024-03-12'}],
     'NVDA': [{'quantity': 3, 'transaction_date': '2024-03-05'}],
     'GOOG': [{'quantity': 1, 'transaction_date': '2024-05-29'}],
@@ -194,6 +194,7 @@ def generate_update_my_portfolio_section():
             else:
                 portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
 
+
 def generate_fy_section(
     fy_buys=True
     # should also be based on risk level or something
@@ -214,10 +215,10 @@ def generate_fy_section(
         """
         
         fy = recommendations['buys']
-        direction_label = 'Increase'
+        direction_label = 'Up'
         
     else:
-        section_header = 'Recommended Shorts or Sells'
+        section_header = 'Strategic Shorts or Sells'
         fy_msg = """
         The following stocks are expected to lose value within the next 3 months.
         
@@ -226,7 +227,7 @@ def generate_fy_section(
         """
         
         fy = recommendations['sells']
-        direction_label = 'Decrease'
+        direction_label = 'Down'
         
     st.markdown(f"## {section_header}")
     st.markdown('---')
@@ -246,7 +247,7 @@ def generate_fy_section(
             stock_df = fy[fy['ticker']==ticker]
             
             current_price = list(stock_df['Close'])[0]
-            probability = round(100 * (list(stock_df['probability'])[0]), 0)
+            probability = round(100 * (list(stock_df['probability'])[0]), 2)
             if fy_buys == False:
                 color = "inverse"
             else:
@@ -255,7 +256,7 @@ def generate_fy_section(
             columns[i].metric(
                 label=f"{ticker}",
                 value=f"${current_price:,.2f}",
-                delta=f"{direction_label} Socre: {probability}",
+                delta=f"{probability}% Match",
                 delta_color = color
             )
     return recommended_stocks # thinking about how to dedupe between FY and YMAL
@@ -268,7 +269,7 @@ def generate_ymal_section(
     st.markdown("## You Might Also Like")
     st.markdown('---')
     
-    change_risk_level = st.toggle('Change my risk level', key='ChangeRiskLevel_on_Home')
+    change_risk_level = st.toggle('Change My Risk Level', key='ChangeRiskLevel_on_Home')
     if change_risk_level:
         risk_level = st.slider(
             'Select your risk level:',

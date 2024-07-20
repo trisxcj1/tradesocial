@@ -176,6 +176,7 @@ def generate_browse_and_compare_section(
                 st.write(
                     f"""
                     Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                    
                     {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated peak period
                     for this year, which means that value of the stock is expected to increase. 
                     
@@ -188,6 +189,7 @@ def generate_browse_and_compare_section(
                 st.write(
                     f"""
                     Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                    
                     {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period
                     for this year, which means that value of the stock is expected to increase. 
                     
@@ -200,6 +202,7 @@ def generate_browse_and_compare_section(
             st.write(
                 f"""
                 Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                
                 {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period for the year,
                 which means that the value of the stock is expected to increase.
                 
@@ -214,6 +217,7 @@ def generate_browse_and_compare_section(
             st.write(
                 f"""
                 Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                
                 {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
                 for this year and is approaching it's estimated low period, which means that value of the stock is
                 expected to decrease.
@@ -230,6 +234,7 @@ def generate_browse_and_compare_section(
                 st.write(
                     f"""
                     Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                    
                     {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated low period
                     for this year, which means that value of the stock is expected to decrease.
                     
@@ -243,6 +248,7 @@ def generate_browse_and_compare_section(
                 st.write(
                     f"""
                     Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                    
                     {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
                     for this year, which means that value of the stock is expected to decrease.
                     

@@ -144,7 +144,7 @@ class DataManipulationHelpers():
             columns=['Date', 'Close', 'Volume', 'ticker']
         )
         
-        for ticker in all_stocks[:11]:
+        for ticker in all_stocks:
             ticker_df = self.get_ystock_data_over_time(
                 ticker,
                 start_date='most recent trading day',
