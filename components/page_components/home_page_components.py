@@ -3,6 +3,12 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+import os
+from dotenv import load_dotenv
+
+import yaml
+from yaml.loader import SafeLoader
+
 import streamlit as st
 
 import plotly.graph_objs as go
@@ -10,34 +16,31 @@ import plotly.express as px
 
 from helpers.data_manipulation_helpers import DataManipulationHelpers
 from data.configs import (
-    USER_RISK_LEVEL,
     STOCK_TICKERS_DICT
 )
-
+from app_secrets.current_user_config import (
+    USER_USERNAME,
+    USER_PORTFOLIO,
+    USER_RISK_LEVEL
+)
 
 dmh__i = DataManipulationHelpers()
 
-# ----- TradeSocial Home Page Components -----
+load_dotenv()
+users_config_path = os.getenv('USERS_CONFIG_LOCATION')
+current_user_config_path = os.getenv('CURRENT_USERS_CONFIG_LOCATION')
 
+# ----- TradeSocial Home Page Components -----
 # TODO: improve
-portfolio = {
-    'AAPL': [{'quantity': 1, 'transaction_date': '2024-03-05'}],
-    'GME': [{'quantity': 1, 'transaction_date': '2024-05-14'}],
-    'META': [{'quantity': 1, 'transaction_date': '2024-04-26'}],
-    'CMG': [{'quantity': 1, 'transaction_date': '2024-05-20'}],
-    'QQQ': [{'quantity': 1, 'transaction_date': '2024-06-07'}],
-    'UL': [{'quantity': 1, 'transaction_date': '2024-06-06'}],
-    'RDDT': [{'quantity': 1, 'transaction_date': '2024-03-26'}],
-    # 'GOOGL': [{'quantity': 5, 'transaction_date': '2024-06-15'}],
-    'MSFT': [{'quantity': 1, 'transaction_date': '2024-03-12'}],
-    'NVDA': [{'quantity': 3, 'transaction_date': '2024-03-05'}],
-    'GOOG': [{'quantity': 1, 'transaction_date': '2024-05-29'}],
-    'TSLA': [{'quantity': 2, 'transaction_date': '2024-03-05'}],
-    'PANW': [{'quantity': 1, 'transaction_date': '2024-03-06'}],
-}
+portfolio = USER_PORTFOLIO
+fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks'] # risk level is not currently being used
+ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LEVEL)
+
 
 # TODO: move to data manipulation helpers
 def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
+    # portfolio = current_user_info['portfolio']
+    
     portfolio_value_df = pd.DataFrame(
         columns=['Date', 'ticker', 'Close', 'quantity_owned']
     )
@@ -77,6 +80,8 @@ def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
     return portfolio_value_df
        
 def calculate_my_portfolio_metrics(portfolio=portfolio):
+    # portfolio = current_user_info['portfolio']
+    
     portfolio_value_df = pd.DataFrame(
         columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
     )
@@ -124,28 +129,29 @@ def generate_my_portfolio_section():
     
     portfolio_over_time = calculate_my_portfolio_metrics_over_time()
     
-    portfolio_value_df = calculate_my_portfolio_metrics()
-    portfolio_value_df = (
-        portfolio_value_df[portfolio_value_df['current_value']>0]    
-    )
-    
-    initial_portfolio_value = (
-        portfolio_value_df
-        ['avg_initial_value']
-        .sum()
-    )
-    current_portfolio_value = (
-        portfolio_value_df
-        ['current_value']
-        .sum()
-    )
-    portfolio_pct_change = (
-        round(100 * (current_portfolio_value - initial_portfolio_value)/initial_portfolio_value, 2)
-    )
-
-    gain_sign = '+' if portfolio_pct_change >=0 else '-'
-
     if len(portfolio_over_time) > 0:
+    
+        portfolio_value_df = calculate_my_portfolio_metrics()
+        portfolio_value_df = (
+            portfolio_value_df[portfolio_value_df['current_value']>0]    
+        )
+        
+        initial_portfolio_value = (
+            portfolio_value_df
+            ['avg_initial_value']
+            .sum()
+        )
+        current_portfolio_value = (
+            portfolio_value_df
+            ['current_value']
+            .sum()
+        )
+        portfolio_pct_change = (
+            round(100 * (current_portfolio_value - initial_portfolio_value)/initial_portfolio_value, 2)
+        )
+
+        gain_sign = '+' if portfolio_pct_change >=0 else '-'
+
         st.markdown(f"### Current Portfolio Value: ${current_portfolio_value:,.2f} ({gain_sign}{portfolio_pct_change}%)")
         
         portfolio_agg_level = st.toggle('Show Portfolio Distribution', key='ShowPortfolioDistribution_on_Home')
@@ -178,7 +184,8 @@ def generate_my_portfolio_section():
 def generate_update_my_portfolio_section():
     st.markdown("### Update My Portfolio")
     
-    with st.form(key='update_portfolio_form_on_home'):
+    portfolo_update_counter = 0 
+    with st.form(key=f'update_portfolio_form_on_home_{portfolo_update_counter}'):
         available_tickers = list(STOCK_TICKERS_DICT.keys())
         ticker = st.selectbox('Ticker', available_tickers)
         quantity = st.number_input('Quantity', min_value=1)
@@ -187,13 +194,28 @@ def generate_update_my_portfolio_section():
         submit_button = st.form_submit_button(label='Update Portfolio')
         
         if submit_button:
+            portfolo_update_counter += 1
             if transaction_type == 'Sell':
                 quantity = -quantity
             if ticker in portfolio:
                 portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})
             else:
                 portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
-
+            
+            with open(current_user_config_path, 'w') as current_user_py_file:
+                current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
+                current_user_py_file.write(f"USER_PORTFOLIO = {portfolio}\n")
+                current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
+            
+            
+            with open(users_config_path) as file:
+                users_config = yaml.load(file, Loader=SafeLoader)
+            users_config['credentials']['usernames'][USER_USERNAME]['portfolio'] = portfolio
+            
+            with open(users_config_path, 'w') as file:
+                yaml.dump(users_config, file, default_flow_style=False)
+            
+            
 
 def generate_fy_section(
     fy_buys=True
@@ -201,8 +223,7 @@ def generate_fy_section(
 ):
     """
     """
-    recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks'] # risk level is not currently being used
-    
+    stocks_in_my_portfolio = list(portfolio.keys())
     if fy_buys:
         section_header = 'Recommended Buys For You'
         fy_msg = """
@@ -213,9 +234,7 @@ def generate_fy_section(
         hold them for at least 3 months, the value of your portfolio is 
         expected to increase 🚀
         """
-        
-        fy = recommendations['buys']
-        direction_label = 'Up'
+        fy = fy_recommendations['buys']
         
     else:
         section_header = 'Strategic Shorts or Sells'
@@ -225,17 +244,17 @@ def generate_fy_section(
         If you short or sell these stocks today, you can minimize the risk of
         any losses you might incur from owning these stocks.
         """
-        
-        fy = recommendations['sells']
-        direction_label = 'Down'
+        fy = fy_recommendations['sells']
         
     st.markdown(f"## {section_header}")
     st.markdown('---')
     
     st.write(fy_msg)
     
+    # deduplicating for stocks that will be in YMAL
+    stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
     recommended_stocks = list(
-        fy
+        fy[~fy['ticker'].isin(stocks_in_ymal)]
         .head(4)
         ['ticker']
     )
@@ -249,17 +268,23 @@ def generate_fy_section(
             current_price = list(stock_df['Close'])[0]
             probability = round(100 * (list(stock_df['probability'])[0]), 2)
             if fy_buys == False:
-                color = "inverse"
+                delta_color = "off"
+                if ticker in stocks_in_my_portfolio:
+                    delta_msg = "Sell Shares"
+                else:
+                    delta_msg = "Short Stock"
+                    
             else:
-                color = "normal"
+                delta_color = "normal"
+                delta_msg = f"{probability}% Match"
             
             columns[i].metric(
                 label=f"{ticker}",
                 value=f"${current_price:,.2f}",
-                delta=f"{probability}% Match",
-                delta_color = color
+                delta=f"{delta_msg}",
+                delta_color = delta_color
             )
-    return recommended_stocks # thinking about how to dedupe between FY and YMAL
+    # return recommended_stocks
 
 def generate_ymal_section(
     user_risk_level=USER_RISK_LEVEL
@@ -278,10 +303,11 @@ def generate_ymal_section(
             value=1,
             step=1
         )
+        recommendation_dict = ymal_recommendation_dict
     else:
         risk_level = user_risk_level
+        recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(risk_level)
         
-    recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(risk_level)
     risk_msg = recommendation_dict['risk_msg']
     recommended_stocks = recommendation_dict['recommended_stocks']
     gains_df = recommendation_dict['recent_gain']

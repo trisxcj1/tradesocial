@@ -8,7 +8,6 @@ from components.page_components.home_page_components import (
     generate_ymal_section
 )
 
-
 # ----- TradeSocial Home Page -----
 def generate_home_page():
     """

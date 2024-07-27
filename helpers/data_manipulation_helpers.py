@@ -4,6 +4,7 @@ import numpy as np
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
 
 import joblib
 import os
@@ -38,7 +39,9 @@ class DataManipulationHelpers():
         self,
         ticker,
         start_date=None,
-        end_date='most recent trading day'
+        end_date='most recent trading day',
+        retries=10,
+        delay=5
     ):
         """
         """
@@ -77,10 +80,19 @@ class DataManipulationHelpers():
         
         if start_date == end_date:
             end_date = start_date + relativedelta(days=1)
-            
-        df = yf.download(ticker, start=start_date, end=end_date)
-        df['ticker'] = [ticker] * len(df)
-        return df
+        
+        for attempt in range(retries):
+            try:
+                df = yf.download(ticker, start=start_date, end=end_date)
+                if df.empty:
+                    raise ValueError(f"No data fetched for {ticker}")
+                df.index = pd.to_datetime(df.index)
+                df['ticker'] = [ticker] * len(df)
+                return df
+            except (KeyError, ValueError, AttributeError) as e:
+                print(f"Failed at getting getting {ticker} data with error {e}. Will retry.")
+                time.sleep(delay)
+        raise RuntimeError(f"Failed at fetching data for {ticker} after {retries} attempts")
     
     def calculate_percentage_gain(
         self,

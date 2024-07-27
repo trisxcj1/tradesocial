@@ -1,4 +1,20 @@
-USER_RISK_LEVEL = 5
+# USER_RISK_LEVEL = 5
+
+# MY_PORTFOLIO = {
+#     'AAPL': [{'quantity': 1, 'transaction_date': '2024-03-05'}],
+#     'GME': [{'quantity': 1, 'transaction_date': '2024-05-14'}],
+#     'META': [{'quantity': 1, 'transaction_date': '2024-04-26'}],
+#     'CMG': [{'quantity': 1, 'transaction_date': '2024-05-20'}],
+#     'QQQ': [{'quantity': 1, 'transaction_date': '2024-06-07'}],
+#     'UL': [{'quantity': 1, 'transaction_date': '2024-06-06'}],
+#     'RDDT': [{'quantity': 1, 'transaction_date': '2024-03-26'}],
+#     # 'GOOGL': [{'quantity': 5, 'transaction_date': '2024-06-15'}],
+#     'MSFT': [{'quantity': 1, 'transaction_date': '2024-03-12'}],
+#     'NVDA': [{'quantity': 3, 'transaction_date': '2024-03-05'}],
+#     'GOOG': [{'quantity': 1, 'transaction_date': '2024-05-29'}],
+#     'TSLA': [{'quantity': 2, 'transaction_date': '2024-03-05'}],
+#     'PANW': [{'quantity': 1, 'transaction_date': '2024-03-06'}],
+# }
 
 STOCK_TICKERS_DICT = {
     'AAPL': 'Apple Inc.',

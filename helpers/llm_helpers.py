@@ -36,7 +36,11 @@ from data.configs import STOCK_TICKERS_DICT
 class LLMHelpers():
     """
     """
-    
+    ignored_article_headlines = [
+        "google news",
+        "verfiy you are a human",
+        "we've detected unusual activity from your computer network",
+    ]
     llm = Ollama(
         model='mistral',
         callback_manager = CallbackManager([StreamingStdOutCallbackHandler()]),
@@ -171,15 +175,23 @@ class LLMHelpers():
             if 'attr' in selector:
                 meta_tag = soup.find(selector['tag'], attrs=selector['attr'])
                 if meta_tag and 'content' in meta_tag.attrs:
-                    return html.unescape(meta_tag['content']).strip()
+                    headline = html.unescape(meta_tag['content']).strip()
+                    if headline.lower() not in self.ignored_article_headlines:
+                        return headline
             elif 'class' in selector:
                 headline_tag = soup.find(selector['tag'], class_=selector['class'])
-                if headline_tag and 10 < len(headline_tag.get_text()) < 200:
-                    return html.unescape(headline_tag.get_text()).strip()
+                if headline_tag:
+                    headline = html.unescape(headline_tag.get_text()).strip()
+                    if 10 < len(headline) < 200 and headline.lower() not in self.ignored_article_headlines:
+                        return headline
             else:
                 headline_tag = soup.find(selector['tag'])
-                if headline_tag and 10 < len(headline_tag.get_text()) < 200:
-                    return html.unescape(headline_tag.get_text()).strip() 
+                if headline_tag:
+                    headline = html.unescape(headline_tag.get_text()).strip() 
+                    if 10 < len(headline) < 200 and headline.lower() not in self.ignored_article_headlines:
+                        return headline
+                # if headline_tag and 10 < len(headline_tag.get_text()) < 200:
+                #     return html.unescape(headline_tag.get_text()).strip() 
         return "No headline found"
         
     
@@ -221,7 +233,6 @@ class LLMHelpers():
         articles_df['url'] = article_urls
         articles_df['headline'] = article_headlines
         articles_df['body'] = article_bodies
-                
         return articles_df
     
     def summarize_articles(
