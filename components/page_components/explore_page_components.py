@@ -3,6 +3,11 @@ import pandas as pd
 from datetime import datetime
 import streamlit as st
 
+import yaml
+from yaml.loader import SafeLoader
+import os
+from dotenv import load_dotenv
+
 import plotly.graph_objs as go
 import plotly.express as px
 
@@ -11,11 +16,20 @@ from helpers.llm_helpers import LLMHelpers
 from helpers.plotting_helpers import PlottingHelpers
 from data.configs import STOCK_TICKERS_DICT
 
+load_dotenv()
+users_config_path = os.getenv('USERS_CONFIG_LOCATION')
+current_user_config_path = os.getenv('CURRENT_USERS_CONFIG_LOCATION')
+
 dmh__i = DataManipulationHelpers()
 llmh__i = LLMHelpers()
 ph__i = PlottingHelpers()
 
 # ----- TradeSocial Explore Page Components -----
+with open(users_config_path) as file:
+    users_config = yaml.load(file, Loader=SafeLoader)
+users_info = users_config['credentials']['usernames']
+stock_association_rules = dmh__i.gen_association_rules()
+
 today = datetime.today()
 months_mapping = {
     1: 'January',
@@ -45,7 +59,7 @@ def generate_todays_top_gainers_section(
     
     st.write(
         f"""
-        The `Top Gainers` are those that have shown the most significant
+        The **Top Gainers** are those that have shown the most significant
         positive price movements over the recent period, indicating strong market performance.
         """
     )
@@ -113,11 +127,54 @@ def generate_trending_section(
     
     st.markdown("## Trending 🔥")
     st.markdown('---')
+    
     trend_rank = 1
     for stock in trending_socks:
         st.write(f"#### `#{trend_rank} {STOCK_TICKERS_DICT[stock]} ({stock})`")
         trend_rank += 1
     
+
+def generate_popular_portfolio_stocks_section():
+    """
+    """
+    popular_stocks_dict = {}
+    for username in list(users_info.keys()):
+        for ticker in list(users_info[username]['portfolio'].keys()):
+            user_total_ticker_quantity = 0
+            for i in range(len(users_info[username]['portfolio'][ticker])):
+                user_total_ticker_quantity += users_info[username]['portfolio'][ticker][i]['quantity']
+            if ticker in list(popular_stocks_dict.keys()):
+                popular_stocks_dict[ticker] = popular_stocks_dict[ticker] + user_total_ticker_quantity
+            else:
+                popular_stocks_dict[ticker] = user_total_ticker_quantity
+    
+    popular_stocks_df = pd.DataFrame(list(popular_stocks_dict.items()), columns=['ticker', 'quantity'])
+    popular_stocks_df = popular_stocks_df.sort_values('quantity', ascending=False).head(4)
+    
+    st.markdown("## Popular Portfolio Stocks Right Now")
+    st.markdown("---")
+    st.markdown(
+        f"""
+        Discover stocks that other investors are holding in their portfolios!
+        
+        **Popular Portfolio Stocks Right Now** represents the stocks with the largest quantity
+        that TradeSocial investors are holding in their portfolio right now. By seeing what others
+        are investing in, you can gain insights into market trends and explore potential investment opportunities.
+        """
+    )
+    popular_portfolio_stocks_placeholder = st.empty()
+    with popular_portfolio_stocks_placeholder.container():
+        columns = st.columns(4)
+        
+        for i, ticker in enumerate(list(popular_stocks_df['ticker'])):
+            quantity = list(popular_stocks_df[popular_stocks_df['ticker']==ticker]['quantity'])[0]
+            
+            columns[i].metric(
+                label=f"{ticker}",
+                value=f"{quantity:,} SiP",
+                delta=None
+            )
+        
 
 def generate_browse_and_compare_section(
     stocks_to_view
@@ -265,6 +322,16 @@ def generate_browse_and_compare_section(
             and the estimated low period is {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]}
             """
         )
+        
+        # investors who have ticker_x also have ticker_y
+        investors_also_have = dmh__i.gen_investors_also_bought(stock_association_rules, stocks_to_view[0])
+        if investors_also_have is not None:
+            consequent = investors_also_have.iloc[0]['consequents']
+            consequent_str = ' + '.join(list(consequent))
+            
+            st.write("### Investors Also Have")
+            st.write("---")
+            st.write(f"TradeSocial investors who have `{stocks_to_view[0]}` in their portfolio also have ```{consequent_str}```")
         
     else:
         # plotting performance over time

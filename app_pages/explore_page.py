@@ -12,7 +12,8 @@ from data.configs import STOCK_TICKERS_DICT
 from components.page_components.explore_page_components import (
     generate_todays_top_gainers_section,
     generate_trending_section,
-    generate_browse_and_compare_section
+    generate_browse_and_compare_section,
+    generate_popular_portfolio_stocks_section
 )
 
 dmh__i = DataManipulationHelpers()
@@ -72,7 +73,10 @@ def generate_explore_page():
             ['ticker'])
         )
         
-        # Today's Top Gainers
+        # Popular Portolio Stocks
+        generate_popular_portfolio_stocks_section()
+        
+        # Yesterday's Top Gainers
         generate_todays_top_gainers_section(
             top_gainers_list,
             stocks_df,

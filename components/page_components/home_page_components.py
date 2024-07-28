@@ -31,7 +31,6 @@ users_config_path = os.getenv('USERS_CONFIG_LOCATION')
 current_user_config_path = os.getenv('CURRENT_USERS_CONFIG_LOCATION')
 
 # ----- TradeSocial Home Page Components -----
-# TODO: improve
 portfolio = USER_PORTFOLIO
 fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks'] # risk level is not currently being used
 ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LEVEL)
@@ -39,7 +38,6 @@ ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LE
 
 # TODO: move to data manipulation helpers
 def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
-    # portfolio = current_user_info['portfolio']
     
     portfolio_value_df = pd.DataFrame(
         columns=['Date', 'ticker', 'Close', 'quantity_owned']
@@ -179,10 +177,11 @@ def generate_my_portfolio_section():
             )
             st.plotly_chart(fig)
     else:
-        st.markdown('`Buy shares in a stock to grow your portfolio! Check out the Explore Page.`')
+        st.warning('Buy shares in a stock to grow your portfolio! Check out the Explore Page.')
 
 def generate_update_my_portfolio_section():
     st.markdown("### Update My Portfolio")
+    stock_association_rules = dmh__i.gen_association_rules()
     
     portfolo_update_counter = 0 
     with st.form(key=f'update_portfolio_form_on_home_{portfolo_update_counter}'):
@@ -193,10 +192,23 @@ def generate_update_my_portfolio_section():
         transaction_type = st.selectbox('Transaction Type', ['Buy', 'Sell'])
         submit_button = st.form_submit_button(label='Update Portfolio')
         
+        investors_also_bought = dmh__i.gen_investors_also_bought(
+            stock_association_rules,
+            ticker
+        )
+        
         if submit_button:
             portfolo_update_counter += 1
             if transaction_type == 'Sell':
                 quantity = -quantity
+                st.success(f"Sold {ticker}!")
+            else:
+                st.success(f"Purchased {ticker}!")
+                if investors_also_bought is not None:
+                    consequent = investors_also_bought.iloc[0]['consequents']
+                    consequent_str = ' + '.join(list(consequent))
+                    st.write(f"TradeSocial investors purchased `{ticker}` also purchased ```{consequent_str}```")
+                
             if ticker in portfolio:
                 portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})
             else:
@@ -258,8 +270,8 @@ def generate_fy_section(
         .head(4)
         ['ticker']
     )
-    placeholder = st.empty()
-    with placeholder.container():
+    fy_placeholder = st.empty()
+    with fy_placeholder.container():
         columns = st.columns(len(recommended_stocks))
         
         for i, ticker in enumerate(recommended_stocks):
@@ -314,8 +326,8 @@ def generate_ymal_section(
     
     st.write(f"{risk_msg}")
     
-    placeholder = st.empty()
-    with placeholder.container():
+    ymal_placeholder = st.empty()
+    with ymal_placeholder.container():
         columns = st.columns(len(recommended_stocks))
         
         for i, ticker in enumerate(recommended_stocks):

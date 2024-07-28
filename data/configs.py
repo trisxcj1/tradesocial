@@ -17,6 +17,7 @@
 # }
 
 STOCK_TICKERS_DICT = {
+    'AXP': 'American Express Company',
     'AAPL': 'Apple Inc.',
     'MSFT': 'Microsoft Corporation',
     'AMZN': 'Amazon.com Inc.',
@@ -59,6 +60,8 @@ STOCK_TICKERS_DICT = {
     'DASH': 'DoorDash Inc'
 }
 STOCK_TICKERS_DICT.update({
+    'COIN': 'Coinbase Global Inc',
+    'PLTR': 'Palantir Technologies',
     'BA': 'The Boeing Company',
     'CAT': 'Caterpillar Inc.',
     'GS': 'The Goldman Sachs Group Inc.',
@@ -96,6 +99,16 @@ STOCK_TICKERS_DICT.update({
     'ISRG': 'Intuitive Surgical Inc.',
     'JNJ': 'Johnson & Johnson',
     'QQQ': 'Invesco QQQ ETF',
+    'V': 'VISA Inc',
+    'FMAO': 'Farmers & Merchants Bancorp Inc',
+    'NOW': 'ServiceNow',
+    'THC': 'Tenet Healthcare',
+    'MU': 'Micron Technology',
+    'BTI': 'British American Tobacco',
+    'CPB': 'Campbell Soup',
+    'SHOP': 'Shopify',
+    'SQ': 'Block',
+    'ETSY': 'Etsy',
     # 'KHC': 'The Kraft Heinz Company',
     # 'LIN': 'Linde plc',
     # 'LMT': 'Lockheed Martin Corporation',
@@ -129,7 +142,6 @@ STOCK_TICKERS_DICT.update({
     # 'AIG': 'American International Group Inc.',
     # 'AON': 'Aon plc',
     # 'APH': 'Amphenol Corporation',
-    # 'AXP': 'American Express Company',
     # 'BBY': 'Best Buy Co. Inc.',
     # 'BIIB': 'Biogen Inc.',
     # 'BK': 'The Bank of New York Mellon Corporation',

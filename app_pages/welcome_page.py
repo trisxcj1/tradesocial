@@ -71,18 +71,6 @@ class WelcomePage:
     def gen_login_page(self, authenticator=authenticator):
         """
         """
-        # if show_intro:
-        #     st.markdown("# TradeSocial 💸")
-        #     st.markdown(
-        #         f"""
-        #         **TradeSocial** is a personalized stock trading application
-        #         that combines investment insights with social networking features.
-                
-        #         Discover, connect, and invest smarter with a community-driven approach
-        #         to stock trading.
-        #         """
-        #     )
-        #     st.markdown("---")
         auth_output = authenticator.login(
             fields={
                 'Form name': 'Log into TradeSocial 💸',
@@ -94,53 +82,53 @@ class WelcomePage:
         output = {'auth': auth_output}
         return output
     
-    def gen_onboarding_questionnaire(self):
-        """
-        """
-        st.markdown("# Help us learn more about you")
-        st.markdown("---")
+    # def gen_onboarding_questionnaire(self):
+    #     """
+    #     """
+    #     st.markdown("# Help us learn more about you")
+    #     st.markdown("---")
         
-        portfolio = {}
+    #     portfolio = {}
         
-        st.markdown(
-            f"""
-            ## First, let's start with your trading history.
-            """
-        )
-        previous_trades = st.radio(
-            "Do you have any previous trades you would like to log?",
-            ("Yes, I have previous trades", "No, I don't have any trades yet"),
-            index=None
-        )
-        if previous_trades=="No, I don't have any trades yet":
-            st.markdown(
-                f"""
-                It's the perfect time to get started! Be sure to check out the Explore Page.
-                """
-            )
+    #     st.markdown(
+    #         f"""
+    #         ## First, let's start with your trading history.
+    #         """
+    #     )
+    #     previous_trades = st.radio(
+    #         "Do you have any previous trades you would like to log?",
+    #         ("Yes, I have previous trades", "No, I don't have any trades yet"),
+    #         index=None
+    #     )
+    #     if previous_trades=="No, I don't have any trades yet":
+    #         st.markdown(
+    #             f"""
+    #             It's the perfect time to get started! Be sure to check out the Explore Page.
+    #             """
+    #         )
             
-        elif previous_trades=="Yes, I have previous trades":
-            st.markdown("Amazing! Let's let you get those traded logged.")
+    #     elif previous_trades=="Yes, I have previous trades":
+    #         st.markdown("Amazing! Let's let you get those traded logged.")
             
-            with st.form(key='LogTrades_on_Onboarding'):
-                available_tickers = list(STOCK_TICKERS_DICT.keys())
-                ticker = st.selectbox('Ticker', available_tickers)
-                quantity = st.number_input('Quantity', min_value=1)
-                transaction_date = st.date_input('Transaction Date', min_value=datetime(2000, 1, 1))
-                transaction_type = st.selectbox('Transaction Type', ['Buy'])
-                submit_button = st.form_submit_button(label='Update Portfolio')
+    #         with st.form(key='LogTrades_on_Onboarding'):
+    #             available_tickers = list(STOCK_TICKERS_DICT.keys())
+    #             ticker = st.selectbox('Ticker', available_tickers)
+    #             quantity = st.number_input('Quantity', min_value=1)
+    #             transaction_date = st.date_input('Transaction Date', min_value=datetime(2000, 1, 1))
+    #             transaction_type = st.selectbox('Transaction Type', ['Buy'])
+    #             submit_button = st.form_submit_button(label='Update Portfolio')
                 
-                if submit_button:
-                    if ticker in portfolio:
-                        portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})
-                    else:
-                        portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
-                    st.write(f"{ticker} {transaction_date} transaction logged.")
+    #             if submit_button:
+    #                 if ticker in portfolio:
+    #                     portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})
+    #                 else:
+    #                     portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
+    #                 st.write(f"{ticker} {transaction_date} transaction logged.")
         
-        risk_level = st.slider(
-            "Set your risk level",
-            min_value=1,
-            max_value=10,
-            step=1
-        )
+    #     risk_level = st.slider(
+    #         "Set your risk level",
+    #         min_value=1,
+    #         max_value=10,
+    #         step=1
+    #     )
         

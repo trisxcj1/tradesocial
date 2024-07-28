@@ -9,6 +9,8 @@ import time
 import joblib
 import os
 from dotenv import load_dotenv
+import yaml
+from yaml.loader import SafeLoader
 
 import yfinance as yf
 
@@ -19,12 +21,19 @@ from scipy.spatial.distance import cdist
 
 from statsmodels.tsa.seasonal import seasonal_decompose
 
+from mlxtend.frequent_patterns import apriori, association_rules
+
 from data.configs import STOCK_TICKERS_DICT
 
 # ----- DataManipulationHelpers -----
 
 load_dotenv()
 FY_MODEL = os.getenv('FY_MODEL_LOCATION')
+users_config_path = os.getenv('USERS_CONFIG_LOCATION')
+
+with open(users_config_path) as file:
+    users_config = yaml.load(file, Loader=SafeLoader)
+users_info = users_config['credentials']['usernames']
 
 class DataManipulationHelpers():
     """
@@ -327,6 +336,50 @@ class DataManipulationHelpers():
         )
         return similarity_df
     
+    def gen_association_rules(
+        self
+    ):
+        """
+        """
+        users = list(users_info.keys())
+        portfolio_stocks = []
+        
+        for user in users:
+            user_portfolio = set(users_info[user]['portfolio'].keys())
+            portfolio_stocks.append(user_portfolio)
+        
+        unique_stocks = sorted(
+            set(
+                stock for portfolio in portfolio_stocks for stock in portfolio
+            )
+        )
+        one_hot_encoded = pd.DataFrame(
+            [[stock in portfolio for stock in unique_stocks] for portfolio in portfolio_stocks],
+            columns=unique_stocks,
+            index=users
+        )
+        frequent_itemsets = apriori(one_hot_encoded, min_support=0.01, use_colnames=True)
+        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0.01)
+        return rules
+    
+    def gen_investors_also_bought(
+        self,
+        rules,
+        target_stock='AMZN'
+    ):
+        """
+        """
+        target_stock_rules = rules[rules['antecedents'].apply(lambda x: target_stock in x)]
+        if target_stock_rules.empty:
+            return None
+        else:
+            filtered_rules = target_stock_rules[target_stock_rules['consequents'].apply(lambda x: len(x) >= 3)]
+            if filtered_rules.empty:
+                return None
+            else:
+                return filtered_rules
+        
+        
     def calculate_ts_decomposition(
         self,
         data,

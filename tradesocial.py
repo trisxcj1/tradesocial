@@ -22,7 +22,6 @@ current_user_config_path = os.getenv('CURRENT_USERS_CONFIG_LOCATION')
 
 
 # ----- TradeSocial -----
-# st.set_page_config(page_title='TradeSocial 💸')
 wp__i = WelcomePage()
 show_onboarding_page = False
 
