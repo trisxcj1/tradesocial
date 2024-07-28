@@ -46,6 +46,16 @@ months_mapping = {
     12: 'December'
 }
 
+def string_format_big_number(num):
+    if num < 1000:
+        return str(num)
+    elif num >= 1000 and num < 1000000:
+        return f"{num/1000:.1f}K"
+    elif num >= 1000000 and num < 1000000000:
+        return f"{num/1000000:.1f}M"
+    elif num >= 1000000000:
+        return f"{num/1000000000:.1f}B"
+
 def generate_todays_top_gainers_section(
     gainers_list,
     ticker_df,
@@ -122,16 +132,35 @@ def generate_trending_section(
     trending_df['rank'] = trending_df['Volume'].rank(method='dense', ascending=False)
     trending_socks = list(
         trending_df[trending_df['rank']<6]
+        .sort_values('rank', ascending=True)
         ['ticker']
     )
     
     st.markdown("## Trending 🔥")
     st.markdown('---')
+    st.markdown(
+        f"""
+        Stay on top of market movements with **Trending**.
+        
+        Here are the stocks that had the highest traded volume over the previous day.
+        These stocks are currently attracting significant attention in the market,
+        making them worth watching for potential investment opportunities.
+        """
+    )
     
-    trend_rank = 1
-    for stock in trending_socks:
-        st.write(f"#### `#{trend_rank} {STOCK_TICKERS_DICT[stock]} ({stock})`")
-        trend_rank += 1
+    trending_placeholder = st.empty()
+    with trending_placeholder.container():
+        columns = st.columns(len(trending_socks))
+        
+        for i, ticker in enumerate(trending_socks):
+            df = trending_df[trending_df['ticker']==ticker]
+            ticker_volume = list(df['Volume'])[0]
+            
+            columns[i].metric(
+                label=f"{ticker}",
+                value=f"{string_format_big_number(ticker_volume)}",
+                delta=None
+            )
     
 
 def generate_popular_portfolio_stocks_section():
@@ -158,8 +187,11 @@ def generate_popular_portfolio_stocks_section():
         Discover stocks that other investors are holding in their portfolios!
         
         **Popular Portfolio Stocks Right Now** represents the stocks with the largest quantity
-        that TradeSocial investors are holding in their portfolio right now. By seeing what others
-        are investing in, you can gain insights into market trends and explore potential investment opportunities.
+        that TradeSocial investors are holding in their portfolios right now, measured by the
+        number of units of Shares in Portfolios (SiP).
+        
+        By seeing what others are investing in, you can gain insights into market trends
+        and explore potential investment opportunities.
         """
     )
     popular_portfolio_stocks_placeholder = st.empty()
@@ -171,7 +203,7 @@ def generate_popular_portfolio_stocks_section():
             
             columns[i].metric(
                 label=f"{ticker}",
-                value=f"{quantity:,} SiP",
+                value=f"{string_format_big_number(quantity)} SiP",
                 delta=None
             )
         

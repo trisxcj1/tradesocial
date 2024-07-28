@@ -30,9 +30,9 @@ tradesocial_pages_mapping = {
     'Home 🏡': generate_home_page,
     'Explore 🔎': generate_explore_page,
     'Ask Me Anything ✨': generate_ask_me_anything_page,
-    'Community 👥': generate_unknown_page,
-    'Learn 📚': generate_unknown_page,
-    'Profile 😎': generate_profile_page
+    # 'Community 👥': generate_unknown_page,
+    # 'Learn 📚': generate_unknown_page,
+    # 'Profile 😎': generate_profile_page
 }
 tradesocial_pages_menu_items = list(tradesocial_pages_mapping.keys())
 

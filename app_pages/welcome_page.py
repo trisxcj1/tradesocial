@@ -43,7 +43,14 @@ class WelcomePage:
         if hide:
             return False
         else:
-            st.markdown("### OR")
+            st.markdown(
+                """
+                <div style="text-align: center;">
+                    <h3>OR</h3>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
             
             try:
                 registration_user_email, registration_username, registration_name = authenticator.register_user(
@@ -53,7 +60,7 @@ class WelcomePage:
                         'Email':'Email Address',
                         'Username':'Username',
                         'Password':'Password 🙈',
-                        'Repeat password':'Password Again, sorry...',
+                        'Repeat password':'Password again, sorry...',
                         'Register':"Let's Go! 🚀"
                     }
                 )
