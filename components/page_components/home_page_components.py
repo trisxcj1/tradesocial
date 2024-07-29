@@ -183,6 +183,19 @@ def generate_update_my_portfolio_section():
     st.markdown("### Update My Portfolio")
     stock_association_rules = dmh__i.gen_association_rules()
     
+    st.error(
+        f"""
+        **NOTE**: TradeSocial currently does not have the functionality to support the actual
+        buying or selling of securities.
+        
+        TradeSocial currently allows you to log your trading activity and then generates
+        personalized insights based on your activity, interests, goals, and industry trends.
+        
+        Use TradeSocial to enhance your trading strategy and discover new investment opportunities
+        just for you 😎.
+        """
+    )
+    
     portfolo_update_counter = 0 
     with st.form(key=f'update_portfolio_form_on_home_{portfolo_update_counter}'):
         available_tickers = list(STOCK_TICKERS_DICT.keys())
