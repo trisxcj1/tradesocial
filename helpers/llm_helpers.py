@@ -1,8 +1,15 @@
 # ----- Imports -----
 import streamlit as st
+import time
 import requests
 from bs4 import BeautifulSoup
 import html
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from splinter import Browser
 
 import tensorflow
 from transformers import pipeline, TFAutoModelForSeq2SeqLM, AutoTokenizer
@@ -37,7 +44,7 @@ class LLMHelpers():
     """
     """
     ignored_article_headlines = [
-        "google news",
+        # "google news",
         "verfiy you are a human",
         "we've detected unusual activity from your computer network",
     ]
@@ -190,9 +197,24 @@ class LLMHelpers():
                     headline = html.unescape(headline_tag.get_text()).strip() 
                     if 10 < len(headline) < 200 and headline.lower() not in self.ignored_article_headlines:
                         return headline
-                # if headline_tag and 10 < len(headline_tag.get_text()) < 200:
-                #     return html.unescape(headline_tag.get_text()).strip() 
         return "No headline found"
+    
+    def get_redirected_url(
+        self,
+        google_news_url
+    ):
+        """
+        """
+        chrome_options = Options()
+        chrome_options.add_argument("--headless") 
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        
+        with Browser('chrome', service=Service(ChromeDriverManager().install()), options=chrome_options) as browser:
+            browser.visit(google_news_url)
+            time.sleep(2)
+            new_url = browser.url
+        return new_url
         
     
     def get_recent_news(
@@ -209,16 +231,19 @@ class LLMHelpers():
         article_bodies = []
         
         google_news_url = "https://news.google.com"
-        initial_url = f"{google_news_url}/search?q={ticker}&hl=en-US&gl=US&ceid=US%3Aen"
+        # initial_url = f"{google_news_url}/search?q={ticker}&hl=en-US&gl=US&ceid=US%3Aen"
+        initial_url = f"{google_news_url}/search?q={STOCK_TICKERS_DICT[ticker]}&hl=en-US&gl=US&ceid=US%3Aen"
         initial_response = requests.get(initial_url)
         initial_soup = BeautifulSoup(initial_response.content, 'html.parser')
         
         for item in initial_soup.find_all('article')[:max_results]:
             link_in_a_tag = item.find('a', class_='WwrzSb')['href']
             article_url = f"{google_news_url}{link_in_a_tag}"
+            final_url = self.get_redirected_url(article_url)
             
-            article_response = requests.get(article_url)
+            article_response = requests.get(final_url, allow_redirects=True)
             article_soup = BeautifulSoup(article_response.content, 'html.parser')
+            
             article_headline = self.extract_headline_from_soup(article_soup)
             
             if ("No headline found" not in article_headline) and ("We've detected unusual activity from your computer network" not in article_headline):
@@ -235,6 +260,20 @@ class LLMHelpers():
         articles_df['body'] = article_bodies
         return articles_df
     
+    def process_text_to_summarize(
+        self,
+        text
+    ):
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        def apply_capitalization(s):
+            sentences = re.split(r'(?<=[.!?])\s+', s)
+            sentences = [sentence[0].upper() + sentence[1:] if sentence else '' for sentence in sentences]
+            return ' '.join(sentences)
+        
+        processed_text = apply_capitalization(text)
+        return processed_text.replace(' .', '.')
+    
     def summarize_articles(
         self,
         articles
@@ -249,10 +288,5 @@ class LLMHelpers():
         )
         summary_text = summary_list[0]['summary_text']
         summary_cleaned = ' '.join(summary_text.split())
-        
-        summary_sentence_case = re.sub(
-            r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s",
-            lambda m: m.group(0).capitalize(),
-            summary_cleaned
-        )
+        summary_sentence_case = self.process_text_to_summarize(summary_cleaned)
         return summary_sentence_case
