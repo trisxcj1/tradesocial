@@ -129,12 +129,15 @@ def generate_trending_section(
         ticker_df = ticker_df[['Date', 'Volume', 'ticker']]
         trending_df = pd.concat([trending_df, ticker_df], ignore_index=True)
     
+    trending_df = trending_df.drop_duplicates(subset='ticker')
     trending_df['rank'] = trending_df['Volume'].rank(method='dense', ascending=False)
-    trending_socks = list(
+    trending_stocks = list(
         trending_df[trending_df['rank']<6]
+        # trending_df
         .sort_values('rank', ascending=True)
         ['ticker']
     )
+    # trending_stocks = trending_stocks[:6]
     
     st.markdown("## Trending 🔥")
     st.markdown('---')
@@ -150,9 +153,9 @@ def generate_trending_section(
     
     trending_placeholder = st.empty()
     with trending_placeholder.container():
-        columns = st.columns(len(trending_socks))
+        columns = st.columns(len(trending_stocks))
         
-        for i, ticker in enumerate(trending_socks):
+        for i, ticker in enumerate(trending_stocks):
             df = trending_df[trending_df['ticker']==ticker]
             ticker_volume = list(df['Volume'])[0]
             

@@ -63,9 +63,9 @@ class DataManipulationHelpers():
             end_date = today + relativedelta(days=-1)
             day_of_week = end_date.weekday()
             
-            if day_of_week == 0:
-                end_date = end_date + relativedelta(days=-3)
-            elif day_of_week == 6:
+            # if day_of_week == 0:
+            #     end_date = end_date + relativedelta(days=-3)
+            if day_of_week == 6:
                 end_date = end_date + relativedelta(days=-2)
             elif day_of_week == 5:
                 end_date = end_date + relativedelta(days=-1)
@@ -80,9 +80,9 @@ class DataManipulationHelpers():
             start_date = today + relativedelta(days=-1)
             day_of_week = start_date.weekday()
             
-            if day_of_week == 0:
-                start_date = start_date + relativedelta(days=-3)
-            elif day_of_week == 6:
+            # if day_of_week == 0:
+            #     start_date = start_date + relativedelta(days=-3)
+            if day_of_week == 6:
                 start_date = start_date + relativedelta(days=-2)
             elif day_of_week == 5:
                 start_date = start_date + relativedelta(days=-1)

@@ -198,6 +198,9 @@ def gen_track_my_portfolio_goal_section(
         push_goal_date = today + relativedelta(days=252)
 
         new_goal = round(current_portfolio_value * ((1 + (risk_level_daily_pct/100)) ** time_remaining_until_goal_date), 0)
+        if new_goal >= goal:
+            outstanding_difference = goal - current_portfolio_value
+            new_goal = round(current_portfolio_value + (outstanding_difference * 0.97), 0)
         push_goal = round(current_portfolio_value * ((1 + (next_risk_level_daily_pct/100)) ** 252), 0)
         
         st.markdown("## My Portfolio Goal")
@@ -216,7 +219,7 @@ def gen_track_my_portfolio_goal_section(
             if daily_pct_increase_needed > risk_level_daily_pct:
                 st.markdown(
                     f"""
-                    Your goal was to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and there are
+                    Your goal is to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and there are
                     {time_remaining_until_goal_date} days remaining until then.
                     """
                 )
@@ -233,8 +236,8 @@ def gen_track_my_portfolio_goal_section(
             else:
                 st.markdown(
                     f"""
-                    Your goal was to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and you are on track to achieve with with
-                    {time_remaining_until_goal_date} days remaining until then.
+                    Your goal is to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and you are on track to achieve that since
+                    you have {time_remaining_until_goal_date} days remaining until then.
                     
                     Remember that the stock market is volatile and things can change quickly. Be sure to keep an eye on your
                     portfolio's value as well as your recommended trades to give you the best chance at success.
@@ -332,7 +335,7 @@ def generate_my_portfolio_section():
 
         st.markdown(f"### Current Portfolio Value: ${current_portfolio_value:,.2f} ({gain_sign}{portfolio_pct_change}%)")
         
-        portfolio_agg_level = st.toggle('Show Portfolio Distribution', key='ShowPortfolioDistribution_on_Home')
+        portfolio_agg_level = st.toggle('Show Portfolio Distribution', key='ShowPortfolioDistributionToggle_on_Home')
         show_distribution = True if portfolio_agg_level else False
         
         if show_distribution:
@@ -376,8 +379,9 @@ def generate_update_my_portfolio_section():
         """
     )
     
-    portfolo_update_counter = 0 
-    with st.form(key=f'update_portfolio_form_on_home_{portfolo_update_counter}'):
+    portfolo_update_counter = 0
+    UpdateMyPortfolioFrom_on_Home
+    with st.form(key=f'UpdateMyPortfolioFrom_on_Home_{portfolo_update_counter}'):
         available_tickers = list(STOCK_TICKERS_DICT.keys())
         ticker = st.selectbox('Ticker', available_tickers)
         quantity = st.number_input('Quantity', min_value=1)
@@ -514,7 +518,7 @@ def generate_ymal_section(
     st.markdown("## You Might Also Like")
     st.markdown('---')
     
-    change_risk_level = st.toggle('Change My Risk Level', key='ChangeRiskLevel_on_Home')
+    change_risk_level = st.toggle('Change My Risk Level', key='ChangeRiskLevelToggle_on_Home')
     if change_risk_level:
         risk_level = st.slider(
             'Select your risk level:',
