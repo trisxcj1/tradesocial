@@ -54,9 +54,12 @@ signup_page_output = wp__i.gen_signup_page(hide=hide_sign_up)
 
 if st.session_state['authentication_status']==True:
     user_info = users_config['credentials']['usernames'][username]
+    portfolio_goal_date = user_info['portfolio_goal_date']
     with open(current_user_config_path, 'w') as current_user_file:
         current_user_file.write(f"USER_USERNAME = '{username}'\n")
         current_user_file.write(f"USER_PORTFOLIO = {user_info['portfolio']}\n")
+        current_user_file.write(f"USER_PORTFOLIO_GOAL = {user_info['portfolio_goal']}\n")
+        current_user_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{portfolio_goal_date}'\n")
         current_user_file.write(f"USER_RISK_LEVEL = {user_info['risk_level']}")
         
     with st.sidebar:

@@ -5,7 +5,8 @@ from components.page_components.home_page_components import (
     generate_my_portfolio_section,
     generate_update_my_portfolio_section,
     generate_fy_section,
-    generate_ymal_section
+    generate_ymal_section,
+    gen_track_my_portfolio_goal_section
 )
 
 # ----- TradeSocial Home Page -----
@@ -20,6 +21,8 @@ def generate_home_page():
         Discover, connect, and invest smarter with a community-driven approach to stock trading.
         """
     )
+    
+    gen_track_my_portfolio_goal_section()
     
     # My portfolio
     st.markdown('## My Portfolio')

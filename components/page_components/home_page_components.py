@@ -1,4 +1,5 @@
 # ----- Imports -----
+import math 
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -21,7 +22,9 @@ from data.configs import (
 from app_secrets.current_user_config import (
     USER_USERNAME,
     USER_PORTFOLIO,
-    USER_RISK_LEVEL
+    USER_RISK_LEVEL,
+    USER_PORTFOLIO_GOAL,
+    USER_PORTFOLIO_GOAL_DATE
 )
 
 dmh__i = DataManipulationHelpers()
@@ -78,7 +81,6 @@ def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
     return portfolio_value_df
        
 def calculate_my_portfolio_metrics(portfolio=portfolio):
-    # portfolio = current_user_info['portfolio']
     
     portfolio_value_df = pd.DataFrame(
         columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
@@ -119,6 +121,184 @@ def calculate_my_portfolio_metrics(portfolio=portfolio):
     
     portfolio_value_df = dmh__i.calculate_portfolio_value(portfolio_value_df)
     return portfolio_value_df
+
+def update_my_goal(
+    suggested_goal,
+    suggested_date
+):
+    """
+    """
+    update_my_goal = st.toggle('Update My Goal', key='UpdateMyGoalToggle_on_Home')
+    
+    if update_my_goal:
+        with st.form(key='UpdateMyGoalForm_on_Home'):
+            new_goal_amount = st.number_input('New Goal Amount', value=suggested_goal)
+            new_goal_date = st.date_input('New Target Date', value=suggested_date, min_value=datetime.today())
+            
+            submit_button = st.form_submit_button(label='Save New Goal')
+            
+            if submit_button:
+                with open(current_user_config_path, 'w') as current_user_py_file:
+                    current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
+                    current_user_py_file.write(f"USER_PORTFOLIO = {USER_PORTFOLIO}\n")
+                    current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {new_goal_amount}\n")
+                    current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{new_goal_date}'\n")
+                    current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
+                
+                with open(current_user_config_path) as file:
+                    users_config = yaml.load(file, Loader=SafeLoader)
+                    
+                users_config['credentials']['usernames'][USER_USERNAME]['portfolio_goal'] = new_goal_amount
+                users_config['credentials']['usernames'][USER_USERNAME]['portfolio_goal_date'] = new_goal_date
+                with open(current_user_config_path, 'w') as file:
+                    yaml.dump(users_config, file, default_flow_style=False)
+                
+                st.success("Goal Updated 👍🏽")
+        
+
+def gen_track_my_portfolio_goal_section(
+    portfolio=portfolio,
+    risk_level=USER_RISK_LEVEL,
+    goal=USER_PORTFOLIO_GOAL,
+    goal_date=USER_PORTFOLIO_GOAL_DATE
+):
+    """
+    """
+    risk_level_mappings = {
+        1: 0.02, 2: 0.08, 3: 0.16, 4: 0.22, 5: 0.30,
+        6: 0.35, 7: 0.45, 8: 0.60, 9: 0.72, 10: 0.80,
+        11: 0.97
+    }
+    risk_level = 10 if risk_level >= 10 else risk_level
+    
+    portfolio_over_time = calculate_my_portfolio_metrics_over_time()
+    
+    today = datetime.today()
+    goal_date = datetime.strptime(goal_date, "%Y-%m-%d")
+    
+    time_remaining_until_goal_date = (goal_date - today).days
+    
+    if len(portfolio_over_time) > 0:
+        
+        portfolio_value_df = calculate_my_portfolio_metrics()
+        current_portfolio_value = (
+            portfolio_value_df
+            ['current_value']
+            .sum()
+        )
+        
+        pct_increase_needed = 100 * (goal - current_portfolio_value) / current_portfolio_value
+        daily_pct_increase_needed = pct_increase_needed / time_remaining_until_goal_date
+        risk_level_daily_pct = risk_level_mappings[risk_level]
+        next_risk_level_daily_pct = risk_level_mappings[risk_level+1]
+        
+        estimated_days_required = math.log(goal / current_portfolio_value) / math.log(1 + (risk_level_daily_pct/100))
+        estimated_days_difference = estimated_days_required - time_remaining_until_goal_date
+        new_goal_date = goal_date + relativedelta(days=estimated_days_difference + 5)
+        push_goal_date = today + relativedelta(days=252)
+
+        new_goal = round(current_portfolio_value * ((1 + (risk_level_daily_pct/100)) ** time_remaining_until_goal_date), 0)
+        push_goal = round(current_portfolio_value * ((1 + (next_risk_level_daily_pct/100)) ** 252), 0)
+        
+        st.markdown("## My Portfolio Goal")
+        st.markdown("---")
+        
+        
+        portfolio_progress = current_portfolio_value/goal
+        portfolio_progress = 1.0 if portfolio_progress >= 1 else portfolio_progress
+        portfolio_progress_pct = round(100 * portfolio_progress, 0)
+        portfolio_progress_pct = int(portfolio_progress_pct)
+        
+        st.markdown(f"### You are currently {portfolio_progress_pct}% of the way towards your ${goal:,} portfolio goal")
+        st.progress(portfolio_progress)
+        
+        if (time_remaining_until_goal_date > 1) and (portfolio_progress < 0.95):
+            if daily_pct_increase_needed > risk_level_daily_pct:
+                st.markdown(
+                    f"""
+                    Your goal was to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and there are
+                    {time_remaining_until_goal_date} days remaining until then.
+                    """
+                )
+                st.markdown(
+                    f"""
+                    Given your risk level, you might be uncomfortable making the types of trades necessary to still hit your goal
+                    within your timeframe. Therefore, we recommend either:
+                    - Extending your goal to be ${goal:,} by {new_goal_date.strftime("%B %d, %Y")} `Recommended`
+                    - Updating your goal to be ${new_goal:,} by {goal_date.strftime("%B %d, %Y")}
+                    """
+                )
+                update_my_goal(goal, new_goal_date)
+                
+            else:
+                st.markdown(
+                    f"""
+                    Your goal was to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and you are on track to achieve with with
+                    {time_remaining_until_goal_date} days remaining until then.
+                    
+                    Remember that the stock market is volatile and things can change quickly. Be sure to keep an eye on your
+                    portfolio's value as well as your recommended trades to give you the best chance at success.
+                    """
+                )
+                update_my_goal(push_goal, push_goal_date)
+        
+        if (time_remaining_until_goal_date > 1) and (portfolio_progress >= 0.95):
+            st.markdown(
+                f"""
+                You're a rockstar!
+                
+                Although you have more time remaining to achieve your goal, you're already so close that we think
+                it's time to push you towards a new goal 🔥
+                
+                We think you can aim for ${push_goal:,} by {push_goal_date.strftime("%B %d, %Y")}
+                """
+            )
+            update_my_goal(push_goal, push_goal_date)
+        
+        if (time_remaining_until_goal_date == 1) and (portfolio_progress < 0.95):
+            st.markdown(
+                f"""
+                You gave it a good fight, but time was not on our side. Let's keep on pushing and try with a new goal 💪
+                
+                What do think about ${push_goal:,} by {push_goal_date.strftime("%B %d, %Y")}?
+                """
+            )
+            update_my_goal(push_goal, push_goal_date)
+        
+        if (time_remaining_until_goal_date == 1) and (portfolio_progress >= 0.95):
+            st.markdown(
+                f"""
+                You have 1 day left, but why wait?
+                
+                We think you're ready for a new challenge! Let's try ${push_goal:,} by {push_goal_date.strftime("%B %d, %Y")} 😎
+                """
+            )
+            update_my_goal(push_goal, push_goal_date)
+            
+        if (time_remaining_until_goal_date < 1) and (portfolio_progress < 0.95):
+            st.markdown(
+                f"""
+                It looks like time slipped away from us. The good news is, it's never too late to start a new goal 😉.
+                
+                ${push_goal:,} by {push_goal_date.strftime("%B %d, %Y")}? Let's get started today.
+                """
+            )
+            update_my_goal(push_goal, push_goal_date)
+            
+        if (time_remaining_until_goal_date < 1) and (portfolio_progress >= 0.95):
+            st.markdown(
+                f"""
+                So close 🥲.
+                
+                Let's aim for ${push_goal:,} by {push_goal_date.strftime("%B %d, %Y")} -- I know you can get this one.
+                """
+            )
+            update_my_goal(push_goal, push_goal_date)
+        
+        
+    else:
+        st.warning("Start adding to your portfolio to get closer to your goal!")
+    
 
 def generate_my_portfolio_section():
     """
@@ -243,6 +423,8 @@ def generate_update_my_portfolio_section():
             with open(current_user_config_path, 'w') as current_user_py_file:
                 current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
                 current_user_py_file.write(f"USER_PORTFOLIO = {portfolio}\n")
+                current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {USER_PORTFOLIO_GOAL}\n")
+                current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{USER_PORTFOLIO_GOAL_DATE}'\n")
                 current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
             
             
