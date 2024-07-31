@@ -41,4 +41,4 @@ def generate_home_page():
     generate_ymal_section()
     
     # Recommended Sells
-    generate_fy_section(False)
+    generate_fy_section(fy_buys=False)

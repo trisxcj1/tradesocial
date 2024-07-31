@@ -41,7 +41,6 @@ ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LE
 
 # TODO: move to data manipulation helpers
 def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
-    
     portfolio_value_df = pd.DataFrame(
         columns=['Date', 'ticker', 'Close', 'quantity_owned']
     )
@@ -81,7 +80,6 @@ def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
     return portfolio_value_df
        
 def calculate_my_portfolio_metrics(portfolio=portfolio):
-    
     portfolio_value_df = pd.DataFrame(
         columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
     )
@@ -181,6 +179,9 @@ def gen_track_my_portfolio_goal_section(
     if len(portfolio_over_time) > 0:
         
         portfolio_value_df = calculate_my_portfolio_metrics()
+        portfolio_value_df = (
+            portfolio_value_df[portfolio_value_df['current_value']>0]    
+        )
         current_portfolio_value = (
             portfolio_value_df
             ['current_value']
@@ -219,8 +220,13 @@ def gen_track_my_portfolio_goal_section(
             if daily_pct_increase_needed > risk_level_daily_pct:
                 st.markdown(
                     f"""
-                    Your goal is to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and there are
-                    {time_remaining_until_goal_date} days remaining until then.
+                    Your goal is to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}.
+                    """
+                )
+                st.markdown(
+                    f"""
+                    You are currently at ${current_portfolio_value:,.2f} with {time_remaining_until_goal_date} days
+                    remaining until your goal date.
                     """
                 )
                 st.markdown(
@@ -236,8 +242,13 @@ def gen_track_my_portfolio_goal_section(
             else:
                 st.markdown(
                     f"""
-                    Your goal is to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}, and you are on track to achieve that since
-                    you have {time_remaining_until_goal_date} days remaining until then.
+                    Your goal is to be at ${goal:,} by {goal_date.strftime("%B %d, %Y")}.
+                    """
+                )
+                st.markdown(
+                    f"""
+                    Your are currently at ${current_portfolio_value:,.2f}, and you are on track to achieve your goal since
+                    you have {time_remaining_until_goal_date} days remaining until your deadline.
                     
                     Remember that the stock market is volatile and things can change quickly. Be sure to keep an eye on your
                     portfolio's value as well as your recommended trades to give you the best chance at success.
@@ -380,7 +391,6 @@ def generate_update_my_portfolio_section():
     )
     
     portfolo_update_counter = 0
-    UpdateMyPortfolioFrom_on_Home
     with st.form(key=f'UpdateMyPortfolioFrom_on_Home_{portfolo_update_counter}'):
         available_tickers = list(STOCK_TICKERS_DICT.keys())
         ticker = st.selectbox('Ticker', available_tickers)
@@ -418,6 +428,7 @@ def generate_update_my_portfolio_section():
                         Please  bear with us as we work to fix this issue.
                         """
                     )
+                    st.markdown("<script>location.reload(true);</script>", unsafe_allow_html=True)
                 
             if ticker in portfolio:
                 portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})
@@ -442,80 +453,91 @@ def generate_update_my_portfolio_section():
             
 
 def generate_fy_section(
+    portfolio=portfolio,
     fy_buys=True
     # should also be based on risk level or something
 ):
     """
     """
-    stocks_in_my_portfolio = list(portfolio.keys())
-    if fy_buys:
-        section_header = 'Recommended Buys For You'
-        fy_msg = """
-        Based on your interests and current industry trends, here are a few
-        recommended buys for you!
-        
-        If you purchase these stocks today and 
-        hold them for at least 3 months, the value of your portfolio is 
-        expected to increase 🚀
-        """
-        fy = fy_recommendations['buys']
-        
-    else:
-        section_header = 'Strategic Shorts or Sells'
-        fy_msg = """
-        The following stocks are expected to lose value within the next 3 months.
-        
-        If you short or sell these stocks today, you can minimize the risk of
-        any losses you might incur from owning these stocks.
-        """
-        fy = fy_recommendations['sells']
-        
-    st.markdown(f"## {section_header}")
-    st.markdown('---')
+    portfolio_over_time = calculate_my_portfolio_metrics_over_time()
+    if len(portfolio_over_time) > 0:
     
-    st.write(fy_msg)
-    
-    # deduplicating for stocks that will be in YMAL
-    stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
-    recommended_stocks = list(
-        fy[~fy['ticker'].isin(stocks_in_ymal)]
-        .head(4)
-        ['ticker']
-    )
-    fy_placeholder = st.empty()
-    with fy_placeholder.container():
-        columns = st.columns(len(recommended_stocks))
-        
-        for i, ticker in enumerate(recommended_stocks):
-            stock_df = fy[fy['ticker']==ticker]
+        stocks_in_my_portfolio = list(portfolio.keys())
+        if fy_buys:
+            section_header = 'Recommended Buys For You'
+            fy_msg = """
+            Based on your interests and current industry trends, here are a few
+            recommended buys for you!
             
-            current_price = list(stock_df['Close'])[0]
-            probability = round(100 * (list(stock_df['probability'])[0]), 2)
-            if fy_buys == False:
-                delta_color = "off"
-                if ticker in stocks_in_my_portfolio:
-                    delta_msg = "Sell Shares"
+            If you purchase these stocks today and 
+            hold them for at least 3 months, the value of your portfolio is 
+            expected to increase 🚀
+            """
+            fy = fy_recommendations['buys']
+            
+        else:
+            section_header = 'Strategic Shorts or Sells'
+            fy_msg = """
+            The following stocks are expected to lose value within the next 3 months.
+            
+            If you short or sell these stocks today, you can minimize the risk of
+            any losses you might incur from owning these stocks.
+            """
+            fy = fy_recommendations['sells']
+            
+        st.markdown(f"## {section_header}")
+        st.markdown('---')
+        
+        st.write(fy_msg)
+        
+        # deduplicating for stocks that will be in YMAL
+        stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
+        recommended_stocks = list(
+            fy[~fy['ticker'].isin(stocks_in_ymal)]
+            .head(4)
+            ['ticker']
+        )
+        fy_placeholder = st.empty()
+        with fy_placeholder.container():
+            columns = st.columns(len(recommended_stocks))
+            
+            for i, ticker in enumerate(recommended_stocks):
+                stock_df = fy[fy['ticker']==ticker]
+                
+                current_price = list(stock_df['Close'])[0]
+                probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                if fy_buys == False:
+                    delta_color = "off"
+                    if ticker in stocks_in_my_portfolio:
+                        delta_msg = "Sell Shares"
+                    else:
+                        delta_msg = "Short Stock"
+                        
                 else:
-                    delta_msg = "Short Stock"
-                    
-            else:
-                delta_color = "normal"
-                delta_msg = f"{probability}% Match"
-            
-            columns[i].metric(
-                label=f"{ticker}",
-                value=f"${current_price:,.2f}",
-                delta=f"{delta_msg}",
-                delta_color = delta_color
-            )
-    # return recommended_stocks
+                    delta_color = "normal"
+                    delta_msg = f"{probability}% Match"
+                
+                columns[i].metric(
+                    label=f"{ticker}",
+                    value=f"${current_price:,.2f}",
+                    delta=f"{delta_msg}",
+                    delta_color = delta_color
+                )
+        # return recommended_stocks
+    else:
+        st.warning("Add to your portfolio to see more of your recommendations")
 
 def generate_ymal_section(
+    portfolio=portfolio,
     user_risk_level=USER_RISK_LEVEL
 ):
     """
     """
-    st.markdown("## You Might Also Like")
+    portfolio_over_time = calculate_my_portfolio_metrics_over_time()
+    if len(portfolio_over_time) > 0:
+        st.markdown("## You Might Also Like")
+    else:
+        st.markdown("## We Think You'll Be Interested In")
     st.markdown('---')
     
     change_risk_level = st.toggle('Change My Risk Level', key='ChangeRiskLevelToggle_on_Home')

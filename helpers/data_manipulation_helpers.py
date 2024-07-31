@@ -87,8 +87,8 @@ class DataManipulationHelpers():
             elif day_of_week == 5:
                 start_date = start_date + relativedelta(days=-1)
         
-        if start_date == end_date:
-            end_date = start_date + relativedelta(days=1)
+        # if start_date == end_date:
+        #     end_date = start_date + relativedelta(days=1)
         
         for attempt in range(retries):
             try:
