@@ -55,19 +55,25 @@ class DataManipulationHelpers():
         """
         """
         today = datetime.today()
+        market_close =  datetime.strptime('16:30:00', '%H:%M:%S').time()
+        current_time = datetime.now().time()
         
         if end_date in ['', 'yesterday', 'y']:
             end_date = today + relativedelta(days=-1)
             
         if end_date in ['most recent trading day']:
-            end_date = today + relativedelta(days=-1)
-            day_of_week = end_date.weekday()
+            if current_time > market_close:
+                end_date = today
+                day_of_week = end_date.weekday()
+            else:
+                end_date = today + relativedelta(days=-1)
+                day_of_week = end_date.weekday()
             
             # if day_of_week == 0:
             #     end_date = end_date + relativedelta(days=-3)
             if day_of_week == 6:
                 end_date = end_date + relativedelta(days=-2)
-            elif day_of_week == 5:
+            if day_of_week == 5:
                 end_date = end_date + relativedelta(days=-1)
             
         if start_date in ['', None]:
@@ -77,14 +83,18 @@ class DataManipulationHelpers():
             start_date = today + relativedelta(days=-1)
             
         if start_date in ['most recent trading day']:
-            start_date = today + relativedelta(days=-1)
-            day_of_week = start_date.weekday()
+            if current_time > market_close:
+                start_date = today
+                day_of_week = start_date.weekday()
+            else:
+                start_date = today + relativedelta(days=-1)
+                day_of_week = start_date.weekday()
             
             # if day_of_week == 0:
             #     start_date = start_date + relativedelta(days=-3)
             if day_of_week == 6:
                 start_date = start_date + relativedelta(days=-2)
-            elif day_of_week == 5:
+            if day_of_week == 5:
                 start_date = start_date + relativedelta(days=-1)
         
         # if start_date == end_date:
