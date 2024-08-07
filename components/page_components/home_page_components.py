@@ -494,36 +494,86 @@ def generate_fy_section(
         stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
         recommended_stocks = list(
             fy[~fy['ticker'].isin(stocks_in_ymal)]
-            .head(4)
+            .head(8)
             ['ticker']
         )
-        fy_placeholder = st.empty()
-        with fy_placeholder.container():
-            columns = st.columns(len(recommended_stocks))
+        fy_placeholder_1 = st.empty()
+        fy_placeholder_2 = st.empty()
+        
+        # showing 2 rows if more than 4 recommended stocks
+        if len(recommended_stocks) > 4:
             
-            for i, ticker in enumerate(recommended_stocks):
-                stock_df = fy[fy['ticker']==ticker]
-                
-                current_price = list(stock_df['Close'])[0]
-                probability = round(100 * (list(stock_df['probability'])[0]), 2)
-                if fy_buys == False:
-                    delta_color = "off"
-                    if ticker in stocks_in_my_portfolio:
-                        delta_msg = "Sell Shares"
+            # row 1 of recomemndations
+            with fy_placeholder_1.container():
+                columns_1 = st.columns(4)
+                for i, ticker in enumerate(recommended_stocks[:4]):
+                    stock_df = fy[fy['ticker']==ticker]
+                    current_price = list(stock_df['Close'])[0]
+                    probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                    if fy_buys == False:
+                        delta_color = "off"
+                        if ticker in stocks_in_my_portfolio:
+                            delta_msg = "Sell Shares"
+                        else:
+                            delta_msg = "Short Stock"  
                     else:
-                        delta_msg = "Short Stock"
-                        
-                else:
-                    delta_color = "normal"
-                    delta_msg = f"{probability}% Match"
-                
-                columns[i].metric(
-                    label=f"{ticker}",
-                    value=f"${current_price:,.2f}",
-                    delta=f"{delta_msg}",
-                    delta_color = delta_color
-                )
-        # return recommended_stocks
+                        delta_color = "normal"
+                        delta_msg = f"{probability}% Match"
+                    
+                    columns_1[i].metric(
+                        label=f"{ticker}",
+                        value=f"${current_price:,.2f}",
+                        delta=f"{delta_msg}",
+                        delta_color = delta_color
+                    )
+            # row 2 of recommendations        
+            with fy_placeholder_2.container():
+                columns_2 = st.columns(len(recommended_stocks) - 4)
+                for i, ticker in enumerate(recommended_stocks[4:]):
+                    stock_df = fy[fy['ticker']==ticker]
+                    current_price = list(stock_df['Close'])[0]
+                    probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                    if fy_buys == False:
+                        delta_color = "off"
+                        if ticker in stocks_in_my_portfolio:
+                            delta_msg = "Sell Shares"
+                        else:
+                            delta_msg = "Short Stock"  
+                    else:
+                        delta_color = "normal"
+                        delta_msg = f"{probability}% Match"
+                    
+                    columns_2[i].metric(
+                        label=f"{ticker}",
+                        value=f"${current_price:,.2f}",
+                        delta=f"{delta_msg}",
+                        delta_color = delta_color
+                    )    
+        # only showing 1 more since its less that 4 recommendations            
+        else:            
+            with fy_placeholder_1.container():
+                columns = st.columns(len(recommended_stocks))
+                for i, ticker in enumerate(recommended_stocks[:5]):
+                    stock_df = fy[fy['ticker']==ticker]
+                    current_price = list(stock_df['Close'])[0]
+                    probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                    if fy_buys == False:
+                        delta_color = "off"
+                        if ticker in stocks_in_my_portfolio:
+                            delta_msg = "Sell Shares"
+                        else:
+                            delta_msg = "Short Stock"     
+                    else:
+                        delta_color = "normal"
+                        delta_msg = f"{probability}% Match"
+                    
+                    columns[i].metric(
+                        label=f"{ticker}",
+                        value=f"${current_price:,.2f}",
+                        delta=f"{delta_msg}",
+                        delta_color = delta_color
+                    )
+        
     else:
         st.warning("Add to your portfolio to see more of your recommendations")
 

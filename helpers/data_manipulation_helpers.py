@@ -100,6 +100,8 @@ class DataManipulationHelpers():
                 return df
             except (KeyError, ValueError, AttributeError) as e:
                 print(f"Failed at getting getting {ticker} data with error {e}. Will retry.")
+                if start_date == end_date:
+                    end_date = end_date + relativedelta(days=1)
                 time.sleep(delay)
         raise RuntimeError(f"Failed at fetching data for {ticker} after {retries} attempts")
     

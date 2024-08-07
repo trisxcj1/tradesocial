@@ -66,8 +66,9 @@ class WelcomePage:
                 )
                 if registration_user_email:
                     users_config['credentials']['usernames'][registration_username]['portfolio'] = {}
-                    users_config['credentials']['usernames'][registration_username]['risk_level'] = 1
+                    users_config['credentials']['usernames'][registration_username]['risk_level'] = 3
                     users_config['credentials']['usernames'][registration_username]['portfolio_goal'] = 5000
+                    users_config['credentials']['usernames'][registration_username]['portfolio_goal_date'] = '2025-12-30'
                     with open(users_config_path, 'w') as file:
                         yaml.dump(users_config, file, default_flow_style=False)
                     st.success('You have successfully registered! Now go back to Login to get started.')
