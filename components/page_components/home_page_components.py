@@ -195,7 +195,7 @@ def gen_track_my_portfolio_goal_section(
         
         estimated_days_required = math.log(goal / current_portfolio_value) / math.log(1 + (risk_level_daily_pct/100))
         estimated_days_difference = estimated_days_required - time_remaining_until_goal_date
-        new_goal_date = goal_date + relativedelta(days=estimated_days_difference + 5)
+        new_goal_date = goal_date + relativedelta(days=estimated_days_difference + 30)
         push_goal_date = today + relativedelta(days=252)
 
         new_goal = round(current_portfolio_value * ((1 + (risk_level_daily_pct/100)) ** time_remaining_until_goal_date), 0)
