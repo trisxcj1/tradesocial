@@ -462,3 +462,24 @@ class DataManipulationHelpers():
             'estimated_cycle_length': estimated_cycle_length
         }
         return output
+
+    def calculate_rsi(
+        self,
+        df,
+        period=14
+    ):
+        """
+        """
+        original_cols = list(df.columns)
+        output_cols = original_cols + ['RSI']
+        df = df.sort_values('Date', ascending=True)
+        df['price_change'] = df['Close'].diff()
+        df['gain'] = df['price_change'].apply(lambda x: x if x > 0 else 0)
+        df['loss'] = df['price_change'].apply(lambda x: -x if x < 0 else 0)
+        df['avg_gain'] = df['gain'].rolling(window=period, min_periods=1).mean()
+        df['avg_loss'] = df['loss'].rolling(window=period, min_periods=1).mean()
+        
+        df['RS'] = df['avg_gain'] / df['avg_loss']
+        df['RSI'] = 100 - (100 / (1 + df['RS']))
+        return df[output_cols]
+        # return df[['Date', 'RSI']]

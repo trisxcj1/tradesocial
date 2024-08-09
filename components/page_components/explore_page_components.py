@@ -211,6 +211,101 @@ def generate_popular_portfolio_stocks_section():
             )
         
 
+def generate_technical_graphs_section(
+    stock_df,
+    ticker
+):
+    """
+    """
+    st.markdown("### Technical Graphs")
+    st.markdown('---')
+    
+    possible_metrics = ['Moving Average', 'RSI', 'MACD', 'Bollinger Bands']
+    metrics = st.multiselect('Select a Metric', possible_metrics, default='RSI')
+    odf = stock_df[['Date', 'Close']]
+    odf.rename(columns={'Close': 'value'}, inplace=True)
+    odf['label'] = ['Actual Price'] * len(odf)
+    avg_stock_price = stock_df['Close'].mean()
+    
+    if 'Moving Average' in metrics:
+        st.markdown("#### Moving Average")
+        ma_periods = st.slider('Select Moving Average Periods', min_value=7, max_value=250, value=[7, 30], step=1)
+        st.write('')
+        for period in ma_periods:
+            ma_df = stock_df[['Date', 'Close']]
+            ma_df['value'] = ma_df['Close'].rolling(window=period).mean()
+            ma_df = ma_df[['Date', 'value']].dropna()
+            ma_df['label'] = [f"{period}-Day MA"] * len(ma_df)
+            odf = pd.concat([odf, ma_df], ignore_index=True)
+            
+        fig = px.line(
+            odf,
+            x='Date',
+            y='value',
+            color='label',
+            title=f"{ticker} Moving Average Analysis",
+            labels={
+                'value': 'Price ($)',
+                'label': 'Label'
+            }
+        )
+        st.plotly_chart(fig)
+    
+    if 'RSI' in metrics:
+        st.markdown("#### Relative Strength Index (RSI)")
+        rsi_period = st.slider('Select RSI Period', min_value=7, max_value=250, value=14, step=1)
+        rsi_overbought_level = st.slider('Select Overbought Level', min_value=0, value=70, max_value=100, step=1)
+        rsi_oversold_level = st.slider('Select Oversold Level', min_value=0, value=30, max_value=100, step=1)
+        
+        rsi_df = dmh__i.calculate_rsi(stock_df[['Date', 'Close']], rsi_period)
+        rsi_df = rsi_df[['Date', 'RSI']].tail(rsi_period + 60)
+        
+        rsi_fig = go.Figure()
+        rsi_fig.add_trace(
+            go.Scatter(
+                x=rsi_df['Date'],
+                y=rsi_df['RSI'],
+                mode='lines',
+                name=f"{rsi_period}-Day RSI"
+            )
+        )
+        rsi_fig.add_trace(
+            go.Scatter(
+                x=rsi_df['Date'],
+                y=[rsi_overbought_level] * len(rsi_df),
+                mode='lines',
+                name=f"Overbought Level",
+                line=dict(color='red', width=1, dash='dash')
+            )
+        )
+        rsi_fig.add_trace(
+            go.Scatter(
+                x=rsi_df['Date'],
+                y=[rsi_oversold_level] * len(rsi_df),
+                mode='lines',
+                name=f"Oversold Level",
+                line=dict(color='green', width=1, dash='dash')
+            )
+        )
+        rsi_fig.add_trace(
+            go.Scatter(
+                x=rsi_df['Date'].to_list() + rsi_df['Date'][::-1].to_list(),
+                y=[rsi_overbought_level] * len(rsi_df) + [rsi_oversold_level] * len(rsi_df),
+                fill='toself',
+                fillcolor='rgba(144, 238, 144, 0.4)',
+                name=f"Valid Range",
+                line=dict(color='rgba(144, 238, 144, 0)')
+            )
+        )
+        rsi_fig.update_layout(
+            title=f"{ticker} Relative Strength Index",
+            xaxis=dict(title='Date'),
+            yaxis=dict(title='RSI'),
+        )
+        st.plotly_chart(rsi_fig)
+
+    
+    
 def generate_browse_and_compare_section(
     stocks_to_view
 ):
@@ -357,6 +452,11 @@ def generate_browse_and_compare_section(
             and the estimated low period is {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]}
             """
         )
+        
+        # showing advanced technical charts
+        show_technical_graphs = st.toggle('Show Advanced Technical Graphs', key='ShowTechnicalGraphsToggle_on_Explore')
+        if show_technical_graphs:
+            generate_technical_graphs_section(stocks_df, stocks_to_view[0])
         
         # investors who have ticker_x also have ticker_y
         investors_also_have = dmh__i.gen_investors_also_bought(stock_association_rules, stocks_to_view[0])
