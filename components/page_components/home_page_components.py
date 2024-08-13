@@ -483,7 +483,8 @@ def generate_quick_wins_section(
             fy[
                 (~fy['ticker'].isin(stocks_in_ymal)) &
                 (~fy['ticker'].isin(stocks_in_fy_buys)) &
-                (~fy['ticker'].isin(stocks_in_fy_sells))
+                (~fy['ticker'].isin(stocks_in_fy_sells)) &
+                (~fy['ticker'].isin(stocks_in_my_portfolio))
             ]
             .head(8)
             ['ticker']
