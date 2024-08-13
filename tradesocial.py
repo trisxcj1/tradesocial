@@ -27,7 +27,6 @@ show_onboarding_page = False
 
 # creating a menu for users to tab between pages
 tradesocial_pages_mapping = {
-    'Explore 🔎': generate_explore_page,
     'Home 🏡': generate_home_page,
     'Explore 🔎': generate_explore_page,
     'Ask Me Anything ✨': generate_ask_me_anything_page,

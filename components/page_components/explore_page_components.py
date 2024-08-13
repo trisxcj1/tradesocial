@@ -132,7 +132,7 @@ def generate_trending_section(
     trending_df = trending_df.drop_duplicates(subset='ticker')
     trending_df['rank'] = trending_df['Volume'].rank(method='dense', ascending=False)
     trending_stocks = list(
-        trending_df[trending_df['rank']<6]
+        trending_df[trending_df['rank']<11]
         # trending_df
         .sort_values('rank', ascending=True)
         ['ticker']
@@ -151,15 +151,26 @@ def generate_trending_section(
         """
     )
     
-    trending_placeholder = st.empty()
-    with trending_placeholder.container():
-        columns = st.columns(len(trending_stocks))
-        
-        for i, ticker in enumerate(trending_stocks):
+    trending_placeholder_1 = st.empty()
+    trending_placeholder_2 = st.empty()
+    
+    with trending_placeholder_1.container():
+        columns_1 = st.columns(5)
+        for i, ticker in enumerate(trending_stocks[:5]):
             df = trending_df[trending_df['ticker']==ticker]
             ticker_volume = list(df['Volume'])[0]
+            columns_1[i].metric(
+                label=f"{ticker}",
+                value=f"{string_format_big_number(ticker_volume)}",
+                delta=None
+            )
             
-            columns[i].metric(
+    with trending_placeholder_2.container():
+        columns_2 = st.columns(5)
+        for i, ticker in enumerate(trending_stocks[5:]):
+            df = trending_df[trending_df['ticker']==ticker]
+            ticker_volume = list(df['Volume'])[0]
+            columns_2[i].metric(
                 label=f"{ticker}",
                 value=f"{string_format_big_number(ticker_volume)}",
                 delta=None
@@ -414,11 +425,64 @@ def generate_technical_graphs_section(
             )
         )
         rsi_fig.update_layout(
-            title=f"{ticker} Relative Strength Index",
+            title=f"{ticker} Relative Strength Index Analysis",
             xaxis=dict(title='Date'),
             yaxis=dict(title='RSI'),
         )
         st.plotly_chart(rsi_fig)
+    
+    if 'Bollinger Bands' in metrics:
+        st.markdown("#### Bollinger Bands")
+        
+        bollinger_period = st.slider('Select The Moving Average Period', min_value=7, max_value=250, value=20, step=1)
+        bollinger_n_stddevs = st.slider('Select The Number of Standard Deviations', min_value=1, value=2, max_value=5, step=1)
+        
+        bollinger_df = dmh__i.calculate_bollinger_bands(stock_df[['Date', 'Close']], bollinger_period, bollinger_n_stddevs)
+        bollinger_df = bollinger_df[['Date', 'ma_line', 'upper_band', 'lower_band']].tail(bollinger_period + 60)
+        
+        bollinger_fig = go.Figure()
+        bollinger_fig.add_trace(
+            go.Scatter(
+                x=bollinger_df['Date'],
+                y=bollinger_df['ma_line'],
+                mode='lines',
+                name=f"{bollinger_period}-Day MA"
+            )
+        )
+        bollinger_fig.add_trace(
+            go.Scatter(
+                x=bollinger_df['Date'],
+                y=bollinger_df['upper_band'],
+                mode='lines',
+                name=f"Upper Band",
+                line=dict(color='red')
+            )
+        )
+        bollinger_fig.add_trace(
+            go.Scatter(
+                x=bollinger_df['Date'],
+                y=bollinger_df['lower_band'],
+                mode='lines',
+                name=f"Lower Band",
+                line=dict(color='green')
+            )
+        )
+        bollinger_fig.add_trace(
+            go.Scatter(
+                x=pd.concat([bollinger_df['Date'], bollinger_df['Date'][::-1]]),
+                y=pd.concat([bollinger_df['upper_band'], bollinger_df['lower_band'][::-1]]),
+                fill='toself',
+                fillcolor='rgba(144, 238, 144, 0.4)',
+                name=f"Valid Range",
+                line=dict(color='rgba(144, 238, 144, 0)')
+            )
+        )
+        bollinger_fig.update_layout(
+            title=f"{ticker} Bollinger Band Analysis",
+            xaxis=dict(title='Date'),
+            yaxis=dict(title='Price ($)'),
+        )
+        st.plotly_chart(bollinger_fig)
 
     
     

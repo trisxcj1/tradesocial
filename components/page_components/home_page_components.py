@@ -36,6 +36,7 @@ current_user_config_path = os.getenv('CURRENT_USERS_CONFIG_LOCATION')
 # ----- TradeSocial Home Page Components -----
 portfolio = USER_PORTFOLIO
 fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks'] # risk level is not currently being used
+fy_quick_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL, quick_fy=True)['recommended_stocks'] # risk level is not currently being used
 ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LEVEL)
 
 
@@ -473,7 +474,8 @@ def generate_fy_section(
             hold them for at least 3 months, the value of your portfolio is 
             expected to increase 🚀
             """
-            fy = fy_recommendations['buys']
+            # fy = fy_recommendations['buys']
+            fy = fy_quick_recommendations['buys']
             
         else:
             section_header = 'Strategic Shorts or Sells'
@@ -596,13 +598,13 @@ def generate_ymal_section(
             'Select your risk level:',
             min_value=1,
             max_value=10,
-            value=1,
+            value=USER_RISK_LEVEL,
             step=1
         )
-        recommendation_dict = ymal_recommendation_dict
-    else:
-        risk_level = user_risk_level
         recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(risk_level)
+    else:
+        # risk_level = user_risk_level
+        recommendation_dict = ymal_recommendation_dict
         
     risk_msg = recommendation_dict['risk_msg']
     recommended_stocks = recommendation_dict['recommended_stocks']

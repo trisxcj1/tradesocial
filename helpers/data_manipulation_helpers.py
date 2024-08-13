@@ -29,6 +29,7 @@ from data.configs import STOCK_TICKERS_DICT
 
 load_dotenv()
 FY_MODEL = os.getenv('FY_MODEL_LOCATION')
+QUICK_FY_MODEL = os.getenv('QUICK_FY_MODEL_LOCATION')
 users_config_path = os.getenv('USERS_CONFIG_LOCATION')
 
 with open(users_config_path) as file:
@@ -168,13 +169,17 @@ class DataManipulationHelpers():
     def claculate_fy_recommended_stocks(
         self,
         risk_level,
+        quick_fy=False
     ):
         """
         """
-        fy_model = joblib.load(FY_MODEL)
+        if quick_fy:
+            fy_model = joblib.load(QUICK_FY_MODEL)
+        else:    
+            fy_model = joblib.load(FY_MODEL)
         all_stocks = list(STOCK_TICKERS_DICT.keys())
         stocks_df = pd.DataFrame(
-            columns=['Date', 'Close', 'Volume', 'ticker']
+            columns=['Date', 'Close', 'Volume', 'ticker', 'RSI']
         )
         
         for ticker in all_stocks:
@@ -186,10 +191,15 @@ class DataManipulationHelpers():
             ticker_df.reset_index(inplace=True)
             ticker_df.rename(columns={'index': 'Date'}, inplace=True)
             ticker_df = ticker_df[['Date', 'Close', 'Volume', 'ticker']]
-            stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
-        
-        predictions = fy_model.predict(stocks_df[['Close', 'Volume']])
-        probabilities = fy_model.predict_proba(stocks_df[['Close', 'Volume']])
+            rsi_df = self.calculate_rsi(ticker_df)
+            stocks_df = pd.concat([stocks_df, rsi_df], ignore_index=True)
+
+        if quick_fy:
+            predictions = fy_model.predict(stocks_df[['Close', 'Volume', 'RSI']])
+            probabilities = fy_model.predict_proba(stocks_df[['Close', 'Volume', 'RSI']])
+        else:
+            predictions = fy_model.predict(stocks_df[['Close', 'Volume']])
+            probabilities = fy_model.predict_proba(stocks_df[['Close', 'Volume']])
         
         stocks_df['prediction'] = predictions
         stocks_df['probability'] = probabilities.max(axis=1)
@@ -501,3 +511,21 @@ class DataManipulationHelpers():
         df['macd_signal'] = df['macd_line'].ewm(span=signal_period, adjust=False).mean()
         df['macd_hist'] = df['macd_line'] - df['macd_signal']
         return df[output_cols]
+    
+    def calculate_bollinger_bands(
+        self,
+        df,
+        period,
+        number_of_std_devs=2
+    ):
+        """
+        """
+        original_cols = list(df.columns)
+        output_cols = original_cols + ['ma_line', 'upper_band', 'lower_band']
+        
+        df['ma_line'] = df['Close'].rolling(window=period).mean()
+        df['std_dev'] = df['Close'].rolling(window=period).std()
+        df['upper_band'] = df['ma_line'] + (number_of_std_devs * df['std_dev'])
+        df['lower_band'] = df['ma_line'] - (number_of_std_devs * df['std_dev'])
+        return df[output_cols]
+        
