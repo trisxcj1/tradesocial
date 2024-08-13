@@ -220,19 +220,34 @@ def generate_technical_graphs_section(
     st.markdown("### Technical Graphs")
     st.markdown('---')
     
-    possible_metrics = ['Moving Average', 'RSI', 'MACD', 'Bollinger Bands']
-    metrics = st.multiselect('Select a Metric', possible_metrics, default='RSI')
-    odf = stock_df[['Date', 'Close']]
+    possible_metrics = ['Moving Average', 'MACD', 'RSI', 'Bollinger Bands']
+    # metrics = st.multiselect('Select a Metric', possible_metrics, default='Moving Average')
+    metrics = st.multiselect('Select a Metric', possible_metrics, default=possible_metrics)
+    odf = stock_df[['Date', 'Close']].sort_values('Date', ascending=True).tail(500)
     odf.rename(columns={'Close': 'value'}, inplace=True)
     odf['label'] = ['Actual Price'] * len(odf)
     avg_stock_price = stock_df['Close'].mean()
     
+    # Moving Avg section
     if 'Moving Average' in metrics:
         st.markdown("#### Moving Average")
+        st.markdown(
+            f"""
+            **Moving Averages (MAs)** are popular indicators that smooth out price information to help
+            identify trends over a specified period. These averages help investors understand the direction
+            and strength of a stock's trend by filtering out short-term price fluctuations.
+            
+            When short-term MAs cross above long-term MAs, it signals that there is a potential upward trend,
+            which suggests a `buying opportunity` for stocks. When short-term MAs cross below long-term MAs, however,
+            it signals a potential downward trend which could indicate a potential `selling opportunity`.
+            
+            Using MAs, in conjunction with other indicators and your investment strategy, can help you
+            make more informed trading decisions and improve your investment outcomes.
+            """
+        )
         ma_periods = st.slider('Select Moving Average Periods', min_value=7, max_value=250, value=[7, 30], step=1)
-        st.write('')
         for period in ma_periods:
-            ma_df = stock_df[['Date', 'Close']]
+            ma_df = stock_df[['Date', 'Close']].sort_values('Date', ascending=True).tail(500)
             ma_df['value'] = ma_df['Close'].rolling(window=period).mean()
             ma_df = ma_df[['Date', 'value']].dropna()
             ma_df['label'] = [f"{period}-Day MA"] * len(ma_df)
@@ -251,8 +266,109 @@ def generate_technical_graphs_section(
         )
         st.plotly_chart(fig)
     
+    # MACD section
+    if 'MACD' in metrics:
+        st.markdown("#### Moving Average Convergence Divergence (MACD)")
+        st.markdown(
+            f"""
+            The **Moving Average Convergence Divergence (MACD)** is a momentum indicator that is
+            typically used to identify changes in the strength, direction, and duration of a stock's
+            price trend. 
+            
+            The `MACD Line` represents the difference between the exponential moving averages of the
+            fast and slow periods. The significance of the `Fast Period` is that it responds more quickly
+            to recent price changes. This means that it is more sensitive to recent price movements and
+            captures short-term trends and momentum effectively. The `Slow Period`, however, smooths out
+            the stock price over time. This makes it less sensitive to recent price fluctuations,
+            which helps it capture broader, long-term trends.
+            
+            The `Signal Line` is an exponential moving average of the `MACD Line`. When the `MACD Line`
+            crosses above the `Signal Line`, it suggests that the recent momentum is stronger that the
+            long-term trend, which might indicate a `buying opportunity`. However, when the `MACD Line`
+            crosses below the `Signal Line`, it indicates that the recent momentum is weaker compared to 
+            the longer-term trend, which might suggest a `selling opportunity`. 
+            
+            Lastly, when looking at the `MACD Histogram`, positive values indicate that the fast period
+            is gaining on the slow period, once again indicating potential `buying opportunities`.
+            
+            Using MACD, in conjunction with other indicators and your investment strategy, can help you
+            make more informed trading decisions and improve your investment outcomes.
+            """
+        )
+        macd_signal_period = st.slider('Select The MACD Signal Period', min_value=7, max_value=250, value=9, step=1)
+        macd_fast_period = st.slider('Select The MACD Fast Period', min_value=7, value=12, max_value=250, step=1)
+        macd_slow_period = st.slider('Select The MACD Slow Period', min_value=7, value=26, max_value=250, step=1)
+        
+        macd_df = dmh__i.calculate_macd(
+            stock_df[['Date', 'Close']],
+            macd_signal_period,
+            macd_fast_period,
+            macd_slow_period
+        )
+        macd_df = macd_df.tail(macd_slow_period + 60)
+        
+        macd_fig = go.Figure()
+        macd_fig.add_trace(
+            go.Scatter(
+                x=macd_df['Date'],
+                y=macd_df['macd_line'],
+                mode='lines',
+                name='MACD Line',
+                line=dict(color='blue')
+            )
+        )
+        macd_fig.add_trace(
+            go.Scatter(
+                x=macd_df['Date'],
+                y=macd_df['macd_signal'],
+                mode='lines',
+                name='MACD Signal',
+                line=dict(color='red')
+            )
+        )
+        macd_fig.add_trace(
+            go.Bar(
+                x=macd_df['Date'],
+                y=macd_df['macd_hist'],
+                name='MACD Histogram',
+                marker_color='lightgreen'
+            )
+        )
+        macd_fig.update_layout(
+            title=f"{ticker} MACD Analysis",
+            xaxis_title='Date',
+            yaxis_title='Value'
+        )
+        st.plotly_chart(macd_fig)
+        
+    # RSI section    
     if 'RSI' in metrics:
         st.markdown("#### Relative Strength Index (RSI)")
+        st.markdown(
+            f"""
+            The **Relative Strength Index (RSI)** is a momentum oscillator that measures the speed
+            and change of price movements to identify overbought or oversold conditions in a stock.
+            
+            The `RSI` value ranges from 0 to 100, and is typically calculated using a 14-day period.
+            This value helps gauge the strength of recent price movements and whether a stock is
+            potentially overbought or oversold.
+            
+            An `Overbought` scenario is when the price of a stock has risen significantly and rapidly,
+            pushing the stock's value to levels that might not be sustainable in the short term. Typically,
+            a stock is considered overbought when the RSI value increases to 70 or above. An overbought
+            stock might be due for a price correction or price decline as market conditions normalize.
+            Therefore, as an investor, you can use this signal to `consider selling or taking profits`.
+            
+           An `Oversold` scenario is when the price of a stock has dropped significantly and rapidly, resulting
+           in levels that might be undervalued in the short term. Typically, a stock is considered oversold
+           when the RSI value decreases to 30 or below. An oversold stock might be poised for for a price
+           rebound or increase as the market normalizes. Therefore, as an investor, you can use this signal
+           to `consider buying a stock`.
+            
+            Using RSI, in conjunction with other indicators and your investment strategy, can help you
+            make more informed trading decisions and improve your investment outcomes.
+            """
+        )
         rsi_period = st.slider('Select RSI Period', min_value=7, max_value=250, value=14, step=1)
         rsi_overbought_level = st.slider('Select Overbought Level', min_value=0, value=70, max_value=100, step=1)
         rsi_oversold_level = st.slider('Select Oversold Level', min_value=0, value=30, max_value=100, step=1)

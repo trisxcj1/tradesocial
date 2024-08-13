@@ -482,4 +482,22 @@ class DataManipulationHelpers():
         df['RS'] = df['avg_gain'] / df['avg_loss']
         df['RSI'] = 100 - (100 / (1 + df['RS']))
         return df[output_cols]
-        # return df[['Date', 'RSI']]
+    
+    def calculate_macd(
+        self,
+        df,
+        signal_period,
+        fast_period,
+        slow_period
+    ):
+        """
+        """
+        original_cols = list(df.columns)
+        output_cols = original_cols + ['macd_signal', 'macd_line', 'macd_hist']
+        
+        df['ema_fast'] = df['Close'].ewm(span=fast_period, adjust=False).mean()
+        df['ema_slow'] = df['Close'].ewm(span=slow_period, adjust=False).mean()
+        df['macd_line'] = df['ema_fast'] - df['ema_slow']
+        df['macd_signal'] = df['macd_line'].ewm(span=signal_period, adjust=False).mean()
+        df['macd_hist'] = df['macd_line'] - df['macd_signal']
+        return df[output_cols]

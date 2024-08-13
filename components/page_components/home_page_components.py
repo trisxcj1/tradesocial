@@ -232,7 +232,7 @@ def gen_track_my_portfolio_goal_section(
                 st.markdown(
                     f"""
                     Given your risk level, you might be uncomfortable making the types of trades necessary to still hit your goal
-                    within your timeframe. Therefore, we recommend either:
+                    within your timeframe. Therefore, we suggest either:
                     - Extending your goal to be ${goal:,} by {new_goal_date.strftime("%B %d, %Y")} `Recommended`
                     - Updating your goal to be ${new_goal:,} by {goal_date.strftime("%B %d, %Y")}
                     """
