@@ -6,7 +6,8 @@ from components.page_components.home_page_components import (
     generate_update_my_portfolio_section,
     generate_fy_section,
     generate_ymal_section,
-    gen_track_my_portfolio_goal_section
+    gen_track_my_portfolio_goal_section,
+    generate_quick_wins_section
 )
 
 # ----- TradeSocial Home Page -----
@@ -33,6 +34,9 @@ def generate_home_page():
         generate_update_my_portfolio_section()
 
     generate_my_portfolio_section()
+    
+    # Quick Wins
+    generate_quick_wins_section()
     
     # Buys For You
     generate_fy_section()

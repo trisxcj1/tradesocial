@@ -453,6 +453,75 @@ def generate_update_my_portfolio_section():
             
             
 
+def generate_quick_wins_section(
+    portfolio=portfolio,
+    buys=True
+):
+    """
+    """
+    portfolio_over_time = calculate_my_portfolio_metrics_over_time()
+    if len(portfolio_over_time) > 0:
+        stocks_in_my_portfolio = list(portfolio.keys())
+        fy = fy_quick_recommendations['buys']
+        stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
+        stocks_in_fy_buys = fy_recommendations['buys']['ticker'][:8]
+        stocks_in_fy_sells = fy_recommendations['sells']['ticker'][:8]
+        
+        st.markdown(f"## Your 7-Day Growth Opportunities ✨")
+        st.markdown('---')
+        st.markdown(
+            f"""
+            Here are a few quick wins we think you'll love. 
+            
+            Based on today's market conditions, these stocks are predicted
+            to increase in value within the next 7 days. Keep an eye on
+            these recommendations to potentially capitalize on short-term
+            opportunities.
+            """
+        )
+        recommended_stocks = list(
+            fy[
+                (~fy['ticker'].isin(stocks_in_ymal)) &
+                (~fy['ticker'].isin(stocks_in_fy_buys)) &
+                (~fy['ticker'].isin(stocks_in_fy_sells))
+            ]
+            .head(8)
+            ['ticker']
+        )
+        
+        quick_wins_placeholder_1 = st.empty()
+        quick_wins_placeholder_2 = st.empty()
+        
+        with quick_wins_placeholder_1.container():
+            columns_1 = st.columns(4)
+            for i, ticker in enumerate(recommended_stocks[:4]):
+                stock_df = fy[fy['ticker']==ticker]
+                current_price = list(stock_df['Close'])[0]
+                probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                delta_msg = f"{probability}% Match"
+                columns_1[i].metric(
+                    label=f"{ticker}",
+                    value=f"${current_price:,.2f}",
+                    delta=f"{delta_msg}"
+                )
+        
+        with quick_wins_placeholder_2.container():
+            columns_2 = st.columns(len(recommended_stocks) - 4)
+            for i, ticker in enumerate(recommended_stocks[4:]):
+                stock_df = fy[fy['ticker']==ticker]
+                current_price = list(stock_df['Close'])[0]
+                probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                delta_msg = f"{probability}% Match"
+                columns_2[i].metric(
+                    label=f"{ticker}",
+                    value=f"${current_price:,.2f}",
+                    delta=f"{delta_msg}"
+                )
+        
+    else:
+        st.warning("Add to your portfolio to see more of your recommendations")
+        
+    
 def generate_fy_section(
     portfolio=portfolio,
     fy_buys=True
@@ -474,8 +543,7 @@ def generate_fy_section(
             hold them for at least 3 months, the value of your portfolio is 
             expected to increase 🚀
             """
-            # fy = fy_recommendations['buys']
-            fy = fy_quick_recommendations['buys']
+            fy = fy_recommendations['buys']
             
         else:
             section_header = 'Strategic Shorts or Sells'
