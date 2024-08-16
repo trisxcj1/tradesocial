@@ -1,6 +1,7 @@
 # ----- Imports -----
 import pandas as pd
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import streamlit as st
 
 import yaml
@@ -15,6 +16,9 @@ from helpers.data_manipulation_helpers import DataManipulationHelpers
 from helpers.llm_helpers import LLMHelpers
 from helpers.plotting_helpers import PlottingHelpers
 from data.configs import STOCK_TICKERS_DICT
+from app_secrets.current_user_config import (
+    USER_RISK_LEVEL
+)
 
 load_dotenv()
 users_config_path = os.getenv('USERS_CONFIG_LOCATION')
@@ -29,6 +33,14 @@ with open(users_config_path) as file:
     users_config = yaml.load(file, Loader=SafeLoader)
 users_info = users_config['credentials']['usernames']
 stock_association_rules = dmh__i.gen_association_rules()
+
+fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks']
+fy_quick_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL, quick_fy=True)['recommended_stocks']
+
+fy_buys = list(fy_recommendations['buys']['ticker'])
+fy_sells = list(fy_recommendations['sells']['ticker'])
+fy_quick_buys = list(fy_quick_recommendations['buys']['ticker'])
+fy_quick_sells = list(fy_quick_recommendations['sells']['ticker'])
 
 today = datetime.today()
 months_mapping = {
@@ -56,6 +68,85 @@ def string_format_big_number(num):
     elif num >= 1000000000:
         return f"{num/1000000000:.1f}B"
 
+def calculate_portfolio_metrics(portfolio):
+    portfolio_value_df = pd.DataFrame(
+        columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
+    )
+    
+    for ticker in portfolio:
+        for transaction in portfolio[ticker]:
+            transaction_date = transaction['transaction_date']
+            transaction_date_d = datetime.strptime(transaction_date, '%Y-%m-%d').date()
+            transaction_date_end = (transaction_date_d + relativedelta(days=1)).strftime('%Y-%m-%d')
+            
+            initial_stock_data = dmh__i.get_ystock_data_over_time(
+                ticker,
+                transaction_date,
+                transaction_date_end
+            )
+            initial_stock_data = initial_stock_data[['ticker', 'Close']]
+            initial_stock_data.rename(columns={'Close': 'initial_price'}, inplace=True)
+            initial_stock_data['quantity_i'] = transaction['quantity'] 
+            initial_stock_data['initial_value'] = initial_stock_data['quantity_i'] * initial_stock_data['initial_price']
+            
+            current_stock_data = dmh__i.get_ystock_data_over_time(
+                ticker,
+                start_date='most recent trading day'
+            )
+            current_stock_data = current_stock_data[['ticker', 'Close']]
+            current_stock_data.rename(columns={'Close': 'current_price'}, inplace=True)
+            current_stock_data['quantity'] = transaction['quantity']
+            current_stock_data['current_value'] = current_stock_data['quantity'] * current_stock_data['current_price']
+            
+            joined_data = (
+                initial_stock_data
+                .merge(current_stock_data, on='ticker', how='inner')
+            )
+            joined_data = joined_data.drop('quantity_i', axis=1)
+            portfolio_value_df = pd.concat([portfolio_value_df, joined_data], ignore_index=True)
+    
+    portfolio_value_df = dmh__i.calculate_portfolio_value(portfolio_value_df)
+    return portfolio_value_df
+
+def generate_best_portfolio_combinations_section():
+    """
+    """
+    odf = pd.DataFrame(columns=['portfolio_stocks', 'pct_change'])
+    # for username in list(users_info.keys()):
+    for username in ['tj', 'techbro', 'stonksonlygoup']:
+        current_df = pd.DataFrame(columns=['portfolio_stocks', 'pct_change'])
+        portfolio = users_info[username]['portfolio']
+        if len(portfolio) > 0:
+            portfolio_stocks = list(users_info[username]['portfolio'].keys())
+            portfolio_value_df = calculate_portfolio_metrics(portfolio)
+            portfolio_value_df = (
+                portfolio_value_df[portfolio_value_df['current_value']>0]    
+            )
+            
+            initial_portfolio_value = (
+                portfolio_value_df
+                ['avg_initial_value']
+                .sum()
+            )
+            current_portfolio_value = (
+                portfolio_value_df
+                ['current_value']
+                .sum()
+            )
+            if initial_portfolio_value > 0:
+                portfolio_pct_change = 0.0
+            else:
+                portfolio_pct_change = (
+                    round(100 * (current_portfolio_value - initial_portfolio_value)/initial_portfolio_value, 2)
+                )
+            current_df['portfolio_stocks'] = portfolio_stocks
+            current_df['pct_change'] = portfolio_pct_change
+            odf = pd.concat([odf, current_df], ignore_index=True)
+    odf['rank'] = odf['pct_change'].rank(method='dense', ascending=False)
+    odf = odf.sort_values('rank', ascending=True)
+    # return odf
+    st.write(odf)
+    
 def generate_todays_top_gainers_section(
     gainers_list,
     ticker_df,
@@ -137,7 +228,6 @@ def generate_trending_section(
         .sort_values('rank', ascending=True)
         ['ticker']
     )
-    # trending_stocks = trending_stocks[:6]
     
     st.markdown("## Trending 🔥")
     st.markdown('---')
@@ -192,7 +282,7 @@ def generate_popular_portfolio_stocks_section():
                 popular_stocks_dict[ticker] = user_total_ticker_quantity
     
     popular_stocks_df = pd.DataFrame(list(popular_stocks_dict.items()), columns=['ticker', 'quantity'])
-    popular_stocks_df = popular_stocks_df.sort_values('quantity', ascending=False).head(4)
+    popular_stocks_df = popular_stocks_df.sort_values('quantity', ascending=False).head(5)
     
     st.markdown("## Popular Portfolio Stocks Right Now")
     st.markdown("---")
@@ -202,7 +292,7 @@ def generate_popular_portfolio_stocks_section():
         
         **Popular Portfolio Stocks Right Now** represents the stocks with the largest quantity
         that TradeSocial investors are holding in their portfolios right now, measured by the
-        number of units of Shares in Portfolios (SiP).
+        number of units of Shares in Portfolios.
         
         By seeing what others are investing in, you can gain insights into market trends
         and explore potential investment opportunities.
@@ -210,14 +300,14 @@ def generate_popular_portfolio_stocks_section():
     )
     popular_portfolio_stocks_placeholder = st.empty()
     with popular_portfolio_stocks_placeholder.container():
-        columns = st.columns(4)
+        columns = st.columns(5)
         
         for i, ticker in enumerate(list(popular_stocks_df['ticker'])):
             quantity = list(popular_stocks_df[popular_stocks_df['ticker']==ticker]['quantity'])[0]
             
             columns[i].metric(
                 label=f"{ticker}",
-                value=f"{string_format_big_number(quantity)} SiP",
+                value=f"{string_format_big_number(quantity)}",
                 delta=None
             )
         
@@ -232,7 +322,6 @@ def generate_technical_graphs_section(
     st.markdown('---')
     
     possible_metrics = ['Moving Average', 'MACD', 'RSI', 'Bollinger Bands']
-    # metrics = st.multiselect('Select a Metric', possible_metrics, default='Moving Average')
     metrics = st.multiselect('Select a Metric', possible_metrics, default=possible_metrics)
     odf = stock_df[['Date', 'Close']].sort_values('Date', ascending=True).tail(500)
     odf.rename(columns={'Close': 'value'}, inplace=True)
@@ -433,7 +522,25 @@ def generate_technical_graphs_section(
     
     if 'Bollinger Bands' in metrics:
         st.markdown("#### Bollinger Bands")
-        
+        st.markdown(
+            """
+            **Bollinger Bands** help gaugue the volatility of a stock, which is
+            represented by the distance between the upper and lower bands on the graph.
+            A wider band indicates `higher volatility`, while a narrorwer band suggests 
+            `lower volatility`.
+            
+            When the stock price approaches the `Upper Band`, the stock is typically thought
+            to be overbought and could be due for a price correction. Therefore, as an investor,
+            you can use this signal to `consider selling or taking profits`.
+            
+            When the price approaches the `Lower Band`, the stock is typically thought
+            to be oversold and could be due for a price rebound. Therefore, as an investor,
+            you can use this signal to `consider a buying opportunity`.
+            
+            This visualization helps you to quickly gauge the current volatility and potential
+            price levels of the stock, assisting in making more informed trading decisions.
+            """
+        )
         bollinger_period = st.slider('Select The Moving Average Period', min_value=7, max_value=250, value=20, step=1)
         bollinger_n_stddevs = st.slider('Select The Number of Standard Deviations', min_value=1, value=2, max_value=5, step=1)
         
@@ -504,9 +611,28 @@ def generate_browse_and_compare_section(
         ticker_df.rename(columns={'index': 'Date'}, inplace=True)
         ticker_df = ticker_df[['Date', 'Close', 'ticker']]
         stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
-        # recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 5)])
     
     if len(stocks_to_view)==1:
+        # if in buys, can be in quick_buys or quick_sells
+        if (stocks_to_view[0] in fy_buys) and (stocks_to_view[0] in fy_quick_buys):
+            st.markdown("`Predicted to increase in the short-term and over the next few months`")
+        elif (stocks_to_view[0] in fy_buys) and (stocks_to_view[0] in fy_quick_sells):
+            st.markdown("`Predicted to decrease in the short-term, but increase within the next few months`")
+        
+        # if in quick_buys, can be in buys or sells
+        elif (stocks_to_view[0] in fy_quick_buys) and (stocks_to_view[0] in fy_sells):
+            st.markdown("`Predicted to increase in the short-term, but decrease within the next few months`")
+            
+        # if in sells, can be in quick_buys or quick_sells
+        elif (stocks_to_view[0] in fy_sells) and (stocks_to_view[0] in fy_quick_sells):
+            st.markdown("`Predicted to decrease in the short-term and over the next few months`")
+        
+        else:
+            st.write(f"Quick buy: {stocks_to_view[0] in fy_quick_buys}, {fy_quick_buys}")
+            st.write(f"Quick sell: {stocks_to_view[0] in fy_quick_sells}, {fy_quick_sells}")
+            st.write(f"Overall buy: {stocks_to_view[0] in fy_buys}, {fy_buys}")
+            st.write(f"Overall sell: {stocks_to_view[0] in fy_sells}, {fy_sells}")
+        
         # plotting time series decomp
         stock_ts_decomp = dmh__i.calculate_ts_decomposition(stocks_df, stocks_to_view[0])
         st.plotly_chart(ph__i.plot_stock_decomposition(stock_ts_decomp, stocks_to_view[0]))

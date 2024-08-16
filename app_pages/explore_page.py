@@ -13,7 +13,8 @@ from components.page_components.explore_page_components import (
     generate_todays_top_gainers_section,
     generate_trending_section,
     generate_browse_and_compare_section,
-    generate_popular_portfolio_stocks_section
+    generate_popular_portfolio_stocks_section,
+    # generate_best_portfolio_combinations_section
 )
 
 dmh__i = DataManipulationHelpers()
@@ -72,6 +73,9 @@ def generate_explore_page():
             .head(gainers_rank_to_filter)
             ['ticker'])
         )
+        
+        # Best Portfolio Combinations
+        # generate_best_portfolio_combinations_section()
         
         # Popular Portolio Stocks
         generate_popular_portfolio_stocks_section()

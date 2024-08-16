@@ -210,7 +210,7 @@ class LLMHelpers():
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         
-        with Browser('chrome', service=Service(ChromeDriverManager().install()), options=chrome_options) as browser:
+        with Browser('chrome', service=Service(ChromeDriverManager().install(), timeout=120), options=chrome_options) as browser:
             browser.visit(google_news_url)
             time.sleep(2)
             new_url = browser.url
