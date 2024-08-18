@@ -345,7 +345,7 @@ def generate_technical_graphs_section(
             make more informed trading decisions and improve your investment outcomes.
             """
         )
-        ma_periods = st.slider('Select Moving Average Periods', min_value=7, max_value=250, value=[7, 30], step=1)
+        ma_periods = st.slider('Select Moving Average Periods', min_value=7, max_value=250, value=[7, 100], step=1)
         for period in ma_periods:
             ma_df = stock_df[['Date', 'Close']].sort_values('Date', ascending=True).tail(500)
             ma_df['value'] = ma_df['Close'].rolling(window=period).mean()
@@ -634,130 +634,144 @@ def generate_browse_and_compare_section(
             st.write(f"Overall sell: {stocks_to_view[0] in fy_sells}, {fy_sells}")
         
         # plotting time series decomp
-        stock_ts_decomp = dmh__i.calculate_ts_decomposition(stocks_df, stocks_to_view[0])
-        st.plotly_chart(ph__i.plot_stock_decomposition(stock_ts_decomp, stocks_to_view[0]))
-        
-        cycle_information = dmh__i.generate_sesonality_information(stock_ts_decomp)
-        typical_peak_month, typical_trough_month = cycle_information['typical_peak_month'], cycle_information['typical_trough_month']
-        
-        typical_peak_month_whole = int(typical_peak_month)
-        typical_peak_month_remainder = typical_peak_month - typical_peak_month_whole
-        
-        typical_trough_month_whole = int(typical_trough_month)
-        typical_trough_month_remainder = typical_trough_month - typical_trough_month_whole
-        
-        current_month = today.month
-        high_month_before_low_month = typical_peak_month < typical_trough_month
-        
-        if typical_peak_month_remainder <= 0.25:
-            when_is_peak_period_occurring = "Early"
-        elif (typical_peak_month_remainder > 0.25) and (typical_peak_month_remainder < 0.75):
-            when_is_peak_period_occurring = "Mid"
-        else:
-            when_is_peak_period_occurring = "Late"
+        if len(stocks_df) >= 252:
+            stock_ts_decomp = dmh__i.calculate_ts_decomposition(stocks_df, stocks_to_view[0])
+            st.plotly_chart(ph__i.plot_stock_decomposition(stock_ts_decomp, stocks_to_view[0]))
             
-        if typical_trough_month_remainder <= 0.25:
-            when_is_trough_period_occurring = "Early"
-        elif (typical_trough_month_remainder > 0.25) and (typical_trough_month_remainder < 0.75):
-            when_is_trough_period_occurring = "Mid"
-        else:
-            when_is_trough_period_occurring = "Late"
-        
-        # good times to buy
-        if (high_month_before_low_month) and ((current_month < typical_peak_month) or (current_month > typical_trough_month)):
-            if current_month < typical_peak_month:    
+            cycle_information = dmh__i.generate_sesonality_information(stock_ts_decomp)
+            typical_peak_month, typical_trough_month = cycle_information['typical_peak_month'], cycle_information['typical_trough_month']
+            
+            typical_peak_month_whole = int(typical_peak_month)
+            typical_peak_month_remainder = typical_peak_month - typical_peak_month_whole
+            
+            typical_trough_month_whole = int(typical_trough_month)
+            typical_trough_month_remainder = typical_trough_month - typical_trough_month_whole
+            
+            current_month = today.month
+            high_month_before_low_month = typical_peak_month < typical_trough_month
+            
+            if typical_peak_month_remainder <= 0.25:
+                when_is_peak_period_occurring = "Early"
+            elif (typical_peak_month_remainder > 0.25) and (typical_peak_month_remainder < 0.75):
+                when_is_peak_period_occurring = "Mid"
+            else:
+                when_is_peak_period_occurring = "Late"
+                
+            if typical_trough_month_remainder <= 0.25:
+                when_is_trough_period_occurring = "Early"
+            elif (typical_trough_month_remainder > 0.25) and (typical_trough_month_remainder < 0.75):
+                when_is_trough_period_occurring = "Mid"
+            else:
+                when_is_trough_period_occurring = "Late"
+            
+            # good times to buy
+            if (high_month_before_low_month) and ((current_month < typical_peak_month) or (current_month > typical_trough_month)):
+                if current_month < typical_peak_month:    
+                    st.write(
+                        f"""
+                        Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                        
+                        {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated peak period
+                        for this year, which means that value of the stock is expected to increase. 
+                        
+                        Therefore, if you `buy or long`
+                        `{stocks_to_view[0]}` today or before {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
+                        you should expect to the value of your portfolio to increase over time while you own the stock.
+                        """
+                    )
+                if current_month > typical_trough_month:    
+                    st.write(
+                        f"""
+                        Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
+                        
+                        {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period
+                        for this year, which means that value of the stock is expected to increase. 
+                        
+                        Therefore, if you `buy or long`
+                        `{stocks_to_view[0]}` today or before {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
+                        you should expect to the value of your portfolio to increase over time while you own the stock.
+                        """
+                    )
+            if (~high_month_before_low_month) and ((current_month > typical_trough_month) and (current_month < typical_peak_month)):
                 st.write(
                     f"""
                     Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
                     
-                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated peak period
-                    for this year, which means that value of the stock is expected to increase. 
+                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period for the year,
+                    which means that the value of the stock is expected to increase.
                     
                     Therefore, if you `buy or long`
                     `{stocks_to_view[0]}` today or before {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
-                    you should expect to the value of your portfolio to increase over time while you own the stock.
+                    you should expect the value of your portfolio to increase over time while you own the stock.
                     """
                 )
-            if current_month > typical_trough_month:    
-                st.write(
-                    f"""
-                    Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
                     
-                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period
-                    for this year, which means that value of the stock is expected to increase. 
-                    
-                    Therefore, if you `buy or long`
-                    `{stocks_to_view[0]}` today or before {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
-                    you should expect to the value of your portfolio to increase over time while you own the stock.
-                    """
-                )
-        if (~high_month_before_low_month) and ((current_month > typical_trough_month) and (current_month < typical_peak_month)):
-            st.write(
-                f"""
-                Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `buy or long` the stock.
-                
-                {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated low period for the year,
-                which means that the value of the stock is expected to increase.
-                
-                Therefore, if you `buy or long`
-                `{stocks_to_view[0]}` today or before {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
-                you should expect the value of your portfolio to increase over time while you own the stock.
-                """
-            )
-                
-        # good times to sell         
-        if (high_month_before_low_month) and ((current_month > typical_peak_month) and (current_month < typical_trough_month)):
-            st.write(
-                f"""
-                Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
-                
-                {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
-                for this year and is approaching it's estimated low period, which means that value of the stock is
-                expected to decrease.
-                
-                Therefore, if you `sell or short`
-                `{stocks_to_view[0]}` today or before {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]},
-                you should expect to the minimize any losses you might incur from owning this stock, and the value of your portfolio would
-                at least remain the same or even increase.
-                """
-            )
-    
-        if (~high_month_before_low_month) and ((current_month < typical_trough_month) or (current_month > typical_peak_month)):
-            if current_month < typical_trough_month:
-                st.write(
-                    f"""
-                    Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
-                    
-                    {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated low period
-                    for this year, which means that value of the stock is expected to decrease.
-                    
-                    Therefore, if you `sell or short`
-                    `{stocks_to_view[0]}` today or before {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]},
-                    you should expect to the minimize any losses you might incur from owning this stock,
-                    and the value of your portfolio would at least remain the same or even increase over time.
-                    """
-                )
-            if current_month > typical_peak_month:
+            # good times to sell         
+            if (high_month_before_low_month) and ((current_month > typical_peak_month) and (current_month < typical_trough_month)):
                 st.write(
                     f"""
                     Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
                     
                     {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
-                    for this year, which means that value of the stock is expected to decrease.
+                    for this year and is approaching it's estimated low period, which means that value of the stock is
+                    expected to decrease.
                     
                     Therefore, if you `sell or short`
                     `{stocks_to_view[0]}` today or before {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]},
-                    you should expect to the minimize any losses you might incur from owning this stock, 
-                    and the value of your portfolio would at least remain the same or even increase over time.
+                    you should expect to the minimize any losses you might incur from owning this stock, and the value of your portfolio would
+                    at least remain the same or even increase.
                     """
                 )
-            
-        st.write(
-            f"""
-            > The estimated peak period is {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
-            and the estimated low period is {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]}
-            """
-        )
+        
+            if (~high_month_before_low_month) and ((current_month < typical_trough_month) or (current_month > typical_peak_month)):
+                if current_month < typical_trough_month:
+                    st.write(
+                        f"""
+                        Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                        
+                        {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has not yet reached its estimated low period
+                        for this year, which means that value of the stock is expected to decrease.
+                        
+                        Therefore, if you `sell or short`
+                        `{stocks_to_view[0]}` today or before {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]},
+                        you should expect to the minimize any losses you might incur from owning this stock,
+                        and the value of your portfolio would at least remain the same or even increase over time.
+                        """
+                    )
+                if current_month > typical_peak_month:
+                    st.write(
+                        f"""
+                        Based on `{stocks_to_view[0]}`'s cyclical pattern, now could be a good time to `sell or short` the stock.
+                        
+                        {STOCK_TICKERS_DICT[stocks_to_view[0]]}'s stock price has already passed its estimated peak period
+                        for this year, which means that value of the stock is expected to decrease.
+                        
+                        Therefore, if you `sell or short`
+                        `{stocks_to_view[0]}` today or before {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]},
+                        you should expect to the minimize any losses you might incur from owning this stock, 
+                        and the value of your portfolio would at least remain the same or even increase over time.
+                        """
+                    )
+                
+            st.write(
+                f"""
+                > The estimated peak period is {when_is_peak_period_occurring}-{months_mapping[typical_peak_month_whole]},
+                and the estimated low period is {when_is_trough_period_occurring}-{months_mapping[typical_trough_month_whole]}
+                """
+            )
+        else:
+            fig = px.line(
+                stocks_df,
+                x='Date',
+                y='Close',
+                color='ticker',
+                title='Stock Price Over Time',
+                labels={
+                    'Close': 'Price ($)',
+                    'ticker': 'Stock'
+                }
+            )
+            st.plotly_chart(fig)
         
         # showing advanced technical charts
         show_technical_graphs = st.toggle('Show Advanced Technical Graphs', key='ShowTechnicalGraphsToggle_on_Explore')

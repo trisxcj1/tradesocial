@@ -39,6 +39,12 @@ fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['re
 fy_quick_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL, quick_fy=True)['recommended_stocks'] # risk level is not currently being used
 ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LEVEL)
 
+personalization_evolution_note = """
+This feature is powered by AI algorithms and adapts to your preferences and behavior.
+The more you use it, the more tailored and accurate it becomes for you. Your feedback
+and interactions help use continuously enhance its performance.
+"""
+
 
 # TODO: move to data manipulation helpers
 def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
@@ -468,6 +474,7 @@ def generate_quick_wins_section(
         stocks_in_fy_sells = fy_recommendations['sells']['ticker'][:8]
         
         st.markdown(f"## Your 7-Day Growth Opportunities ✨")
+        st.markdown(f"<p style='font-size:12px;'>{personalization_evolution_note}</p>", unsafe_allow_html=True)
         st.markdown('---')
         st.markdown(
             f"""
@@ -557,6 +564,7 @@ def generate_fy_section(
             fy = fy_recommendations['sells']
             
         st.markdown(f"## {section_header}")
+        st.markdown(f"<p style='font-size:12px;'>{personalization_evolution_note}</p>", unsafe_allow_html=True)
         st.markdown('---')
         
         st.write(fy_msg)
@@ -670,9 +678,46 @@ def generate_ymal_section(
             value=USER_RISK_LEVEL,
             step=1
         )
+        st.markdown(f"Your risk level is currently `Level {USER_RISK_LEVEL}`")
+        st.markdown(
+            """
+            Read the following descriptions and choose the risk level that you believe best suits you:
+            
+            **Risk Level 1 (Very Conservative)**: You want to participate in the stock market while
+            with as minimal risk as possible. You prefer the safest route with little to no ips and
+            downs in your investment value. Your returns might be small but steady.
+            
+            **Risk Levels 2-3 (Conservative)**: You are seeking slightly higher returns while still
+            prioritizing safety. You prefer to play it safe, but you are open to minor fluctuations
+            that can increase your portfolio's value.
+            
+            **Risk Level 4 (Conservatiley Moderate)**: You are open to some risks for the potential of
+            higher returns. You want to see some more growth in your investments while still keeping 
+            things relatively stable.
+            
+            **Risk Level 5 (Moderate)**: You are willing to accept moderate fluctuations for potentially
+            higher gains. You are comfortable with the ups and downs, and you undertsand that sometimes
+            you might gain more and other times you might lose more.
+            
+            **Risk Levels 6-7 (Moderately Aggressive)**: You are comfortable with significant market exposure.
+            You are looking for growth and you are not too worried about the possibility of more frequent
+            fluctuations in your investment value.
+            
+            **Risk Level 8 (Aggressive)**: You are seeking substantial growth and you are willing to accept
+            high volatility, knowing that you can win big if you strike the right trade. You are comfortable
+            with significant and frequent changes in your investment value, including some losses.
+            
+            **Risk Level 9 (Very Aggressive)**: You want to prioritize maximum returns over stability and 
+            you are comfortable with the possibility of substantial losses.
+            
+            **Risk Level 10 (Extremely High Risk)**: You want to risk it all. You know the the stock market
+            can provide astronomical retruns, and that it can take it all away. You are willing to take part
+            in high-stakes trading in volatile and speculative markets, with the clear understanding that
+            they could either gain or lose significantly.
+            """
+        )
         recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(risk_level)
     else:
-        # risk_level = user_risk_level
         recommendation_dict = ymal_recommendation_dict
         
     risk_msg = recommendation_dict['risk_msg']

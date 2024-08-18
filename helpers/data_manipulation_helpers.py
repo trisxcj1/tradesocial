@@ -59,6 +59,9 @@ class DataManipulationHelpers():
         market_close =  datetime.strptime('16:30:00', '%H:%M:%S').time()
         current_time = datetime.now().time()
         
+        if isinstance(end_date, int):
+            end_date = today + relativedelta(days=-end_date)
+            
         if end_date in ['', 'yesterday', 'y']:
             end_date = today + relativedelta(days=-1)
             
@@ -76,6 +79,9 @@ class DataManipulationHelpers():
                 end_date = end_date + relativedelta(days=-2)
             if day_of_week == 5:
                 end_date = end_date + relativedelta(days=-1)
+            
+        if isinstance(start_date, int):
+            start_date = today + relativedelta(days=-start_date)
             
         if start_date in ['', None]:
             start_date = end_date + relativedelta(days=-30)
@@ -227,7 +233,8 @@ class DataManipulationHelpers():
         
         for ticker in all_stocks:
             ticker_df = self.get_ystock_data_over_time(
-                ticker
+                ticker,
+                start_date=7
             )
             ticker_df.reset_index(inplace=True)
             ticker_df.rename(columns={'index': 'Date'}, inplace=True)
@@ -245,7 +252,10 @@ class DataManipulationHelpers():
         )
         min_volatility = risk_df['volatility'].min()
         max_volatility = risk_df['volatility'].max()
-        risk_df['normalized_volatility'] = 10 * (risk_df['volatility'] - min_volatility) / (max_volatility - min_volatility)
+        if max_volatility == max_volatility:
+            risk_df['normalized_volatility'] = 10
+        else:
+            risk_df['normalized_volatility'] = 10 * (risk_df['volatility'] - min_volatility) / (max_volatility - min_volatility)
         risk_df = risk_df.sort_values('normalized_volatility', ascending=False)
         
         gain_df = self.calculate_percentage_gain(stocks_df)
@@ -298,6 +308,11 @@ class DataManipulationHelpers():
             Remember that risk works both ways. Therefore, if you can win big, you can
             also lose big -- never invest more than you're willing to lose.
             """
+            
+        if len(recommended_stocks) == 0:
+            risk_df['distance_to_risk'] = abs(risk_df['normalized_volatility'] - risk_level)
+            closest_stocks = risk_df.nsmallest(4, 'distance_to_risk')
+            recommended_stocks = list(closest_stocks['ticker'])
             
         return {
             'risk_msg': risk_msg,
