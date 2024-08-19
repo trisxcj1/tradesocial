@@ -634,7 +634,7 @@ def generate_browse_and_compare_section(
             st.write(f"Overall sell: {stocks_to_view[0] in fy_sells}, {fy_sells}")
         
         # plotting time series decomp
-        if len(stocks_df) >= 252:
+        if len(stocks_df) >= 504:
             stock_ts_decomp = dmh__i.calculate_ts_decomposition(stocks_df, stocks_to_view[0])
             st.plotly_chart(ph__i.plot_stock_decomposition(stock_ts_decomp, stocks_to_view[0]))
             

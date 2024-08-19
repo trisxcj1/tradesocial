@@ -41,6 +41,7 @@ STOCK_TICKERS_DICT = {
     'NKE': 'NIKE Inc.',
     'V': 'Visa Inc.',
     'JPM': 'JPMorgan Chase & Co.',
+    'COF': 'Capital One Financial Corporation',
     'WMT': 'Walmart Inc.',
     'PG': 'Procter & Gamble Co.',
     'KO': 'The Coca-Cola Company',
@@ -97,7 +98,14 @@ STOCK_TICKERS_DICT = {
     'HD': 'Home Depot',
     'TMUS': 'T-Mobile',
     'INTU': 'Intuit',
-    
+    'OXY': 'Occidental Petroleum',
+    'SIRI': 'Sirius XM Holdings Inc',
+    'LSXMK': 'Liberty SiriusXM Series C',
+    'LSXMA': 'Liberty SiriusXM Series A',
+    'LPX': 'Louisiana-Pacific Corp',
+    'LLYVK': 'Liberty Media Corp',
+    'FND': 'Floor and Decor Holdings',
+    'ULTA': 'Ulta Beauty'
 }
 STOCK_TICKERS_DICT.update({
     'COIN': 'Coinbase Global Inc',
@@ -202,7 +210,6 @@ STOCK_TICKERS_DICT.update({
     # 'CERN': 'Cerner Corporation',
     # 'CHD': 'Church & Dwight Co. Inc.',
     # 'CMCSA': 'Comcast Corporation',
-    # 'COF': 'Capital One Financial Corporation',
     # 'COST': 'Costco Wholesale Corporation',
     # 'CSX': 'CSX Corporation',
     # 'CTAS': 'Cintas Corporation',
