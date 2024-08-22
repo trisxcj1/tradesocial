@@ -804,32 +804,32 @@ def generate_browse_and_compare_section(
         st.plotly_chart(fig)
     
     # recent news
-    for ticker in stocks_to_view:
-        recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 5)])
-    if len(recent_news_df) > 0:
-        st.markdown("### Recent News")
-        st.markdown('---')
-        for ticker in stocks_to_view:
-            if len(recent_news_df[recent_news_df['ticker']==ticker]) > 0:
-                st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
-                headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
-                urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
-                articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
+    # for ticker in stocks_to_view:
+    #     recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 5)])
+    # if len(recent_news_df) > 0:
+    #     st.markdown("### Recent News")
+    #     st.markdown('---')
+    #     for ticker in stocks_to_view:
+    #         if len(recent_news_df[recent_news_df['ticker']==ticker]) > 0:
+    #             st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
+    #             headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
+    #             urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
+    #             articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
                 
-                # info_to_summarize = "\n\n".join(
-                #     [
-                #         f"{headline}\n\n{body}" for headline, body in zip(headlines, articles)
-                #     ]
-                # )
-                info_to_summarize = f"{headlines[0]}\n\n{articles[0]}"
-                summary = llmh__i.summarize_articles(info_to_summarize)
+    #             # info_to_summarize = "\n\n".join(
+    #             #     [
+    #             #         f"{headline}\n\n{body}" for headline, body in zip(headlines, articles)
+    #             #     ]
+    #             # )
+    #             info_to_summarize = f"{headlines[0]}\n\n{articles[0]}"
+    #             summary = llmh__i.summarize_articles(info_to_summarize)
                 
-                st.markdown('> **Summary ✨**')
-                st.write(f"> **`{summary}`**")
+    #             st.markdown('> **Summary ✨**')
+    #             st.write(f"> **`{summary}`**")
                 
-                for i in range(len(headlines)):
-                    st.text(f"Headline: {headlines[i]}")
-                    st.markdown(f"- Click [here to read more]({urls[i]})")
+    #             for i in range(len(headlines)):
+    #                 st.text(f"Headline: {headlines[i]}")
+    #                 st.markdown(f"- Click [here to read more]({urls[i]})")
     
     # more like this
     st.markdown("### More Like This")

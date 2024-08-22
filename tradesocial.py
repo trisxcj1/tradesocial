@@ -11,9 +11,9 @@ from dotenv import load_dotenv
 
 from app_pages.welcome_page import WelcomePage
 from app_pages.home_page import generate_home_page
-from app_pages.explore_page import generate_explore_page
-from app_pages.profile_page import generate_profile_page
-from app_pages.unknown_page import generate_unknown_page
+# from app_pages.explore_page import generate_explore_page
+# from app_pages.profile_page import generate_profile_page
+# from app_pages.unknown_page import generate_unknown_page
 from app_pages.ask_me_anything_page import generate_ask_me_anything_page
 
 load_dotenv()
@@ -28,7 +28,7 @@ show_onboarding_page = False
 # creating a menu for users to tab between pages
 tradesocial_pages_mapping = {
     'Home 🏡': generate_home_page,
-    'Explore 🔎': generate_explore_page,
+    # 'Explore 🔎': generate_explore_page,
     'Ask Me Anything ✨': generate_ask_me_anything_page,
     # 'Community 👥': generate_unknown_page,
     # 'Learn 📚': generate_unknown_page,
@@ -61,7 +61,7 @@ if st.session_state['authentication_status']==True:
         current_user_file.write(f"USER_PORTFOLIO_GOAL = {user_info['portfolio_goal']}\n")
         current_user_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{portfolio_goal_date}'\n")
         current_user_file.write(f"USER_RISK_LEVEL = {user_info['risk_level']}")
-        
+    
     with st.sidebar:
         st.markdown("# TradeSocial 💸")
         st.markdown(

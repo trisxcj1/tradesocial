@@ -10,11 +10,12 @@ from helpers.data_manipulation_helpers import DataManipulationHelpers
 from data.configs import STOCK_TICKERS_DICT
 
 from components.page_components.explore_page_components import (
-    generate_todays_top_gainers_section,
-    generate_trending_section,
-    generate_browse_and_compare_section,
-    generate_popular_portfolio_stocks_section,
+    # generate_todays_top_gainers_section,
+    # generate_trending_section,
+    # generate_browse_and_compare_section,
+    # generate_popular_portfolio_stocks_section,
     # generate_best_portfolio_combinations_section
+    generate_browse_and_compare_section
 )
 
 dmh__i = DataManipulationHelpers()
@@ -45,51 +46,51 @@ def generate_explore_page():
         )
     
     else:
-        gainers_rank_to_filter = 5
+        # gainers_rank_to_filter = 5
+        # stocks_df = pd.DataFrame(
+        #     columns=['Date', 'Close', 'ticker']
+        # )
         
-        stocks_df = pd.DataFrame(
-            columns=['Date', 'Close', 'ticker']
-        )
+        # for ticker in stock_tickers:
+        #     ticker_df = dmh__i.get_ystock_data_over_time(ticker)
+        #     ticker_df.reset_index(inplace=True)
+        #     ticker_df.rename(columns={'index': 'Date'}, inplace=True)
+        #     ticker_df = ticker_df[['Date', 'Close', 'ticker']]
+        #     stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
         
-        for ticker in stock_tickers:
-            ticker_df = dmh__i.get_ystock_data_over_time(ticker)
-            ticker_df.reset_index(inplace=True)
-            ticker_df.rename(columns={'index': 'Date'}, inplace=True)
-            ticker_df = ticker_df[['Date', 'Close', 'ticker']]
-            stocks_df = pd.concat([stocks_df, ticker_df], ignore_index=True)
+        # gains = dmh__i.calculate_percentage_gain(stocks_df)
+        # gains['rank'] = gains['pct_change'].rank(method='dense', ascending=False)
         
-        gains = dmh__i.calculate_percentage_gain(stocks_df)
-        gains['rank'] = gains['pct_change'].rank(method='dense', ascending=False)
+        # top_gainers_list = (
+        #     list(gains
+        #     .sort_values('rank', ascending=True)
+        #     .head(gainers_rank_to_filter)
+        #     ['ticker'])
+        # )
+        # top_losers_list = (
+        #     list(gains
+        #     .sort_values('rank', ascending=False)
+        #     .head(gainers_rank_to_filter)
+        #     ['ticker'])
+        # )
         
-        top_gainers_list = (
-            list(gains
-            .sort_values('rank', ascending=True)
-            .head(gainers_rank_to_filter)
-            ['ticker'])
-        )
-        top_losers_list = (
-            list(gains
-            .sort_values('rank', ascending=False)
-            .head(gainers_rank_to_filter)
-            ['ticker'])
-        )
+        # # Best Portfolio Combinations
+        # # generate_best_portfolio_combinations_section()
         
-        # Best Portfolio Combinations
-        # generate_best_portfolio_combinations_section()
+        # # Popular Portolio Stocks
+        # generate_popular_portfolio_stocks_section()
         
-        # Popular Portolio Stocks
-        generate_popular_portfolio_stocks_section()
+        # # Yesterday's Top Gainers
+        # generate_todays_top_gainers_section(
+        #     top_gainers_list,
+        #     stocks_df,
+        #     gains,
+        #     STOCK_TICKERS_DICT
+        # )
         
-        # Yesterday's Top Gainers
-        generate_todays_top_gainers_section(
-            top_gainers_list,
-            stocks_df,
-            gains,
-            STOCK_TICKERS_DICT
-        )
-        
-        # Trending now
-        generate_trending_section(STOCK_TICKERS_DICT)
+        # # Trending now
+        # generate_trending_section(STOCK_TICKERS_DICT)
+        st.warning("Under construction 🚧")
     
     
     

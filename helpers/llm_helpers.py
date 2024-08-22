@@ -11,8 +11,8 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from splinter import Browser
 
-import tensorflow
-from transformers import pipeline, TFAutoModelForSeq2SeqLM, AutoTokenizer
+# import tensorflow
+# from transformers import pipeline, TFAutoModelForSeq2SeqLM, AutoTokenizer
 
 import re
 
@@ -53,14 +53,13 @@ class LLMHelpers():
         callback_manager = CallbackManager([StreamingStdOutCallbackHandler()]),
         temperature=0.9
     )
-    summarization_model_name = "t5-small"
-    summarization_pipeline = pipeline(
-        "summarization",
-        model=TFAutoModelForSeq2SeqLM.from_pretrained(summarization_model_name, from_pt=True),
-        tokenizer=AutoTokenizer.from_pretrained(summarization_model_name),
-        framework='tf'
-        
-    )
+    # summarization_model_name = "t5-small"
+    # summarization_pipeline = pipeline(
+    #     "summarization",
+    #     model=TFAutoModelForSeq2SeqLM.from_pretrained(summarization_model_name, from_pt=True),
+    #     tokenizer=AutoTokenizer.from_pretrained(summarization_model_name),
+    #     framework='tf'
+    # )
     
     ama_prompt_template = PromptTemplate(
         input_variables=['history', 'input'],
@@ -274,19 +273,19 @@ class LLMHelpers():
         processed_text = apply_capitalization(text)
         return processed_text.replace(' .', '.')
     
-    def summarize_articles(
-        self,
-        articles
-    ):
-        """
-        """
-        summary_list = self.summarization_pipeline(
-            articles,
-            min_length=10,
-            max_length=150,
-            do_sample=False
-        )
-        summary_text = summary_list[0]['summary_text']
-        summary_cleaned = ' '.join(summary_text.split())
-        summary_sentence_case = self.process_text_to_summarize(summary_cleaned)
-        return summary_sentence_case
+    # def summarize_articles(
+    #     self,
+    #     articles
+    # ):
+    #     """
+    #     """
+    #     summary_list = self.summarization_pipeline(
+    #         articles,
+    #         min_length=10,
+    #         max_length=150,
+    #         do_sample=False
+    #     )
+    #     summary_text = summary_list[0]['summary_text']
+    #     summary_cleaned = ' '.join(summary_text.split())
+    #     summary_sentence_case = self.process_text_to_summarize(summary_cleaned)
+    #     return summary_sentence_case
