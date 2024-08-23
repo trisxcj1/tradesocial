@@ -9,13 +9,13 @@ import plotly.graph_objs as go
 from helpers.data_manipulation_helpers import DataManipulationHelpers
 from data.configs import STOCK_TICKERS_DICT
 
-# from components.page_components.explore_page_components import (
-#     generate_todays_top_gainers_section,
-#     generate_trending_section,
-#     generate_browse_and_compare_section,
-#     generate_popular_portfolio_stocks_section,
-#     generate_browse_and_compare_section
-# )
+from components.page_components.explore_page_components import (
+    generate_todays_top_gainers_section,
+    generate_trending_section,
+    generate_browse_and_compare_section,
+    generate_popular_portfolio_stocks_section,
+    generate_browse_and_compare_section
+)
 
 dmh__i = DataManipulationHelpers()
 
@@ -89,9 +89,3 @@ def generate_explore_page():
         
         # Trending now
         generate_trending_section(STOCK_TICKERS_DICT)
-# def generate_explore_page():
-#     st.warning("Under construction 🚧")
-    
-    
-    
-    

@@ -10,12 +10,11 @@ import os
 from dotenv import load_dotenv
 
 from app_pages.welcome_page import WelcomePage
-# from app_pages.home_page import generate_home_page
-# from app_pages.explore_2 import generate_explore_2
+from app_pages.home_page import generate_home_page
 from app_pages.explore_page import generate_explore_page
-# from app_pages.profile_page import generate_profile_page
-# from app_pages.unknown_page import generate_unknown_page
-# from app_pages.ask_me_anything_page import generate_ask_me_anything_page
+from app_pages.profile_page import generate_profile_page
+from app_pages.unknown_page import generate_unknown_page
+from app_pages.ask_me_anything_page import generate_ask_me_anything_page
 
 load_dotenv()
 users_config_path = os.getenv('USERS_CONFIG_LOCATION')
@@ -28,10 +27,9 @@ show_onboarding_page = False
 
 # creating a menu for users to tab between pages
 tradesocial_pages_mapping = {
-    # 'Home 🏡': generate_home_page,
-    # 'Explore 🔎': generate_explore_2,
+    'Home 🏡': generate_home_page,
     'Explore 🔎': generate_explore_page,
-    # 'Ask Me Anything ✨': generate_ask_me_anything_page,
+    'Ask Me Anything ✨': generate_ask_me_anything_page,
     # 'Community 👥': generate_unknown_page,
     # 'Learn 📚': generate_unknown_page,
     # 'Profile 😎': generate_profile_page
