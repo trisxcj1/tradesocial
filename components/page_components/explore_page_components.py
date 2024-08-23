@@ -32,7 +32,9 @@ ph__i = PlottingHelpers()
 with open(users_config_path) as file:
     users_config = yaml.load(file, Loader=SafeLoader)
 users_info = users_config['credentials']['usernames']
-stock_association_rules = dmh__i.gen_association_rules()
+
+## NOTE: turning this off for now because it REALLY NEEDS to be batch processing
+# stock_association_rules = dmh__i.gen_association_rules()
 
 fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks']
 fy_quick_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL, quick_fy=True)['recommended_stocks']
@@ -68,84 +70,84 @@ def string_format_big_number(num):
     elif num >= 1000000000:
         return f"{num/1000000000:.1f}B"
 
-def calculate_portfolio_metrics(portfolio):
-    portfolio_value_df = pd.DataFrame(
-        columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
-    )
+# def calculate_portfolio_metrics(portfolio):
+#     portfolio_value_df = pd.DataFrame(
+#         columns=['ticker', 'quantity', 'initial_price', 'initial_value', 'current_price', 'current_value']
+#     )
     
-    for ticker in portfolio:
-        for transaction in portfolio[ticker]:
-            transaction_date = transaction['transaction_date']
-            transaction_date_d = datetime.strptime(transaction_date, '%Y-%m-%d').date()
-            transaction_date_end = (transaction_date_d + relativedelta(days=1)).strftime('%Y-%m-%d')
+#     for ticker in portfolio:
+#         for transaction in portfolio[ticker]:
+#             transaction_date = transaction['transaction_date']
+#             transaction_date_d = datetime.strptime(transaction_date, '%Y-%m-%d').date()
+#             transaction_date_end = (transaction_date_d + relativedelta(days=1)).strftime('%Y-%m-%d')
             
-            initial_stock_data = dmh__i.get_ystock_data_over_time(
-                ticker,
-                transaction_date,
-                transaction_date_end
-            )
-            initial_stock_data = initial_stock_data[['ticker', 'Close']]
-            initial_stock_data.rename(columns={'Close': 'initial_price'}, inplace=True)
-            initial_stock_data['quantity_i'] = transaction['quantity'] 
-            initial_stock_data['initial_value'] = initial_stock_data['quantity_i'] * initial_stock_data['initial_price']
+#             initial_stock_data = dmh__i.get_ystock_data_over_time(
+#                 ticker,
+#                 transaction_date,
+#                 transaction_date_end
+#             )
+#             initial_stock_data = initial_stock_data[['ticker', 'Close']]
+#             initial_stock_data.rename(columns={'Close': 'initial_price'}, inplace=True)
+#             initial_stock_data['quantity_i'] = transaction['quantity'] 
+#             initial_stock_data['initial_value'] = initial_stock_data['quantity_i'] * initial_stock_data['initial_price']
             
-            current_stock_data = dmh__i.get_ystock_data_over_time(
-                ticker,
-                start_date='most recent trading day'
-            )
-            current_stock_data = current_stock_data[['ticker', 'Close']]
-            current_stock_data.rename(columns={'Close': 'current_price'}, inplace=True)
-            current_stock_data['quantity'] = transaction['quantity']
-            current_stock_data['current_value'] = current_stock_data['quantity'] * current_stock_data['current_price']
+#             current_stock_data = dmh__i.get_ystock_data_over_time(
+#                 ticker,
+#                 start_date='most recent trading day'
+#             )
+#             current_stock_data = current_stock_data[['ticker', 'Close']]
+#             current_stock_data.rename(columns={'Close': 'current_price'}, inplace=True)
+#             current_stock_data['quantity'] = transaction['quantity']
+#             current_stock_data['current_value'] = current_stock_data['quantity'] * current_stock_data['current_price']
             
-            joined_data = (
-                initial_stock_data
-                .merge(current_stock_data, on='ticker', how='inner')
-            )
-            joined_data = joined_data.drop('quantity_i', axis=1)
-            portfolio_value_df = pd.concat([portfolio_value_df, joined_data], ignore_index=True)
+#             joined_data = (
+#                 initial_stock_data
+#                 .merge(current_stock_data, on='ticker', how='inner')
+#             )
+#             joined_data = joined_data.drop('quantity_i', axis=1)
+#             portfolio_value_df = pd.concat([portfolio_value_df, joined_data], ignore_index=True)
     
-    portfolio_value_df = dmh__i.calculate_portfolio_value(portfolio_value_df)
-    return portfolio_value_df
+#     portfolio_value_df = dmh__i.calculate_portfolio_value(portfolio_value_df)
+#     return portfolio_value_df
 
-def generate_best_portfolio_combinations_section():
-    """
-    """
-    odf = pd.DataFrame(columns=['portfolio_stocks', 'pct_change'])
-    # for username in list(users_info.keys()):
-    for username in ['tj', 'techbro', 'stonksonlygoup']:
-        current_df = pd.DataFrame(columns=['portfolio_stocks', 'pct_change'])
-        portfolio = users_info[username]['portfolio']
-        if len(portfolio) > 0:
-            portfolio_stocks = list(users_info[username]['portfolio'].keys())
-            portfolio_value_df = calculate_portfolio_metrics(portfolio)
-            portfolio_value_df = (
-                portfolio_value_df[portfolio_value_df['current_value']>0]    
-            )
+# def generate_best_portfolio_combinations_section():
+#     """
+#     """
+#     odf = pd.DataFrame(columns=['portfolio_stocks', 'pct_change'])
+#     # for username in list(users_info.keys()):
+#     for username in ['tj', 'techbro', 'stonksonlygoup']:
+#         current_df = pd.DataFrame(columns=['portfolio_stocks', 'pct_change'])
+#         portfolio = users_info[username]['portfolio']
+#         if len(portfolio) > 0:
+#             portfolio_stocks = list(users_info[username]['portfolio'].keys())
+#             portfolio_value_df = calculate_portfolio_metrics(portfolio)
+#             portfolio_value_df = (
+#                 portfolio_value_df[portfolio_value_df['current_value']>0]    
+#             )
             
-            initial_portfolio_value = (
-                portfolio_value_df
-                ['avg_initial_value']
-                .sum()
-            )
-            current_portfolio_value = (
-                portfolio_value_df
-                ['current_value']
-                .sum()
-            )
-            if initial_portfolio_value > 0:
-                portfolio_pct_change = 0.0
-            else:
-                portfolio_pct_change = (
-                    round(100 * (current_portfolio_value - initial_portfolio_value)/initial_portfolio_value, 2)
-                )
-            current_df['portfolio_stocks'] = portfolio_stocks
-            current_df['pct_change'] = portfolio_pct_change
-            odf = pd.concat([odf, current_df], ignore_index=True)
-    odf['rank'] = odf['pct_change'].rank(method='dense', ascending=False)
-    odf = odf.sort_values('rank', ascending=True)
-    # return odf
-    st.write(odf)
+#             initial_portfolio_value = (
+#                 portfolio_value_df
+#                 ['avg_initial_value']
+#                 .sum()
+#             )
+#             current_portfolio_value = (
+#                 portfolio_value_df
+#                 ['current_value']
+#                 .sum()
+#             )
+#             if initial_portfolio_value > 0:
+#                 portfolio_pct_change = 0.0
+#             else:
+#                 portfolio_pct_change = (
+#                     round(100 * (current_portfolio_value - initial_portfolio_value)/initial_portfolio_value, 2)
+#                 )
+#             current_df['portfolio_stocks'] = portfolio_stocks
+#             current_df['pct_change'] = portfolio_pct_change
+#             odf = pd.concat([odf, current_df], ignore_index=True)
+#     odf['rank'] = odf['pct_change'].rank(method='dense', ascending=False)
+#     odf = odf.sort_values('rank', ascending=True)
+#     # return odf
+#     st.write(odf)
     
 def generate_todays_top_gainers_section(
     gainers_list,
@@ -592,7 +594,6 @@ def generate_technical_graphs_section(
         st.plotly_chart(bollinger_fig)
 
     
-    
 def generate_browse_and_compare_section(
     stocks_to_view
 ):
@@ -778,15 +779,16 @@ def generate_browse_and_compare_section(
         if show_technical_graphs:
             generate_technical_graphs_section(stocks_df, stocks_to_view[0])
         
-        # investors who have ticker_x also have ticker_y
-        investors_also_have = dmh__i.gen_investors_also_bought(stock_association_rules, stocks_to_view[0])
-        if investors_also_have is not None:
-            consequent = investors_also_have.iloc[0]['consequents']
-            consequent_str = ' + '.join(list(consequent))
+        ## NOTE: turning this off for now because it REALLY NEEDS to be batch processing 
+        # # investors who have ticker_x also have ticker_y
+        # investors_also_have = dmh__i.gen_investors_also_bought(stock_association_rules, stocks_to_view[0])
+        # if investors_also_have is not None:
+        #     consequent = investors_also_have.iloc[0]['consequents']
+        #     consequent_str = ' + '.join(list(consequent))
             
-            st.write("### Investors Also Have")
-            st.write("---")
-            st.write(f"TradeSocial investors who have `{stocks_to_view[0]}` in their portfolio also have ```{consequent_str}```")
+        #     st.write("### Investors Also Have")
+        #     st.write("---")
+        #     st.write(f"TradeSocial investors who have `{stocks_to_view[0]}` in their portfolio also have ```{consequent_str}```")
         
     else:
         # plotting performance over time
@@ -804,32 +806,26 @@ def generate_browse_and_compare_section(
         st.plotly_chart(fig)
     
     # recent news
-    # for ticker in stocks_to_view:
-    #     recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 5)])
-    # if len(recent_news_df) > 0:
-    #     st.markdown("### Recent News")
-    #     st.markdown('---')
-    #     for ticker in stocks_to_view:
-    #         if len(recent_news_df[recent_news_df['ticker']==ticker]) > 0:
-    #             st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
-    #             headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
-    #             urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
-    #             articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
+    for ticker in stocks_to_view:
+        recent_news_df = pd.concat([recent_news_df, llmh__i.get_recent_news(ticker, 5)])
+    if len(recent_news_df) > 0:
+        st.markdown("### Recent News")
+        st.markdown('---')
+        for ticker in stocks_to_view:
+            if len(recent_news_df[recent_news_df['ticker']==ticker]) > 0:
+                st.markdown(f"#### `{STOCK_TICKERS_DICT[ticker]} ({ticker})`:")
+                headlines = recent_news_df[recent_news_df['ticker']==ticker]['headline']
+                urls = recent_news_df[recent_news_df['ticker']==ticker]['url']
+                articles = recent_news_df[recent_news_df['ticker']==ticker]['body']
+                info_to_summarize = f"{headlines[0]}\n\n{articles[0]}"
+                summary = llmh__i.summarize_articles(info_to_summarize)
                 
-    #             # info_to_summarize = "\n\n".join(
-    #             #     [
-    #             #         f"{headline}\n\n{body}" for headline, body in zip(headlines, articles)
-    #             #     ]
-    #             # )
-    #             info_to_summarize = f"{headlines[0]}\n\n{articles[0]}"
-    #             summary = llmh__i.summarize_articles(info_to_summarize)
+                st.markdown('> **Summary ✨**')
+                st.write(f"> **`{summary}`**")
                 
-    #             st.markdown('> **Summary ✨**')
-    #             st.write(f"> **`{summary}`**")
-                
-    #             for i in range(len(headlines)):
-    #                 st.text(f"Headline: {headlines[i]}")
-    #                 st.markdown(f"- Click [here to read more]({urls[i]})")
+                for i in range(len(headlines)):
+                    st.text(f"Headline: {headlines[i]}")
+                    st.markdown(f"- Click [here to read more]({urls[i]})")
     
     # more like this
     st.markdown("### More Like This")

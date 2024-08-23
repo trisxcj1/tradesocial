@@ -45,7 +45,6 @@ The more you use it, the more tailored and accurate it becomes for you. Your fee
 and interactions help use continuously enhance its performance.
 """
 
-
 # TODO: move to data manipulation helpers
 def calculate_my_portfolio_metrics_over_time(portfolio=portfolio):
     portfolio_value_df = pd.DataFrame(
@@ -406,10 +405,11 @@ def generate_update_my_portfolio_section():
         transaction_type = st.selectbox('Transaction Type', ['Buy', 'Sell'])
         submit_button = st.form_submit_button(label='Update Portfolio')
         
-        investors_also_bought = dmh__i.gen_investors_also_bought(
-            stock_association_rules,
-            ticker
-        )
+        # # NOTE: turning this off for now because it REALLY NEEDS to be batch processing
+        # investors_also_bought = dmh__i.gen_investors_also_bought(
+        #     stock_association_rules,
+        #     ticker
+        # )
         
         if submit_button:
             portfolo_update_counter += 1
@@ -418,24 +418,26 @@ def generate_update_my_portfolio_section():
                 st.success(f"Sold {STOCK_TICKERS_DICT[ticker]} ({ticker})!")
             else:
                 st.success(f"Purchased {STOCK_TICKERS_DICT[ticker]} ({ticker})!")
-                if investors_also_bought is not None:
-                    consequent = investors_also_bought.iloc[0]['consequents']
-                    consequent_str = ' + '.join(list(consequent))
-                    st.write(f"TradeSocial investors who purchased `{ticker}` also purchased ```{consequent_str}```")
+                
+                # # NOTE: turning this off for now because it REALLY NEEDS to be batch processing
+                # if investors_also_bought is not None:
+                #     consequent = investors_also_bought.iloc[0]['consequents']
+                #     consequent_str = ' + '.join(list(consequent))
+                #     st.write(f"TradeSocial investors who purchased `{ticker}` also purchased ```{consequent_str}```")
                     
-                    st.error(
-                        f"""
-                        Sometimes if you try to log multiple transactions or when you leave the
-                        Update My Portfolio screen, TradeSocial crashes 😕
-                        
-                        It's not you, it's us. We are sorry for this inconvenience as this is not
-                        the intended experience. If this does happen to you, refreshing the app
-                        usually solves the problem.
-                        
-                        Please  bear with us as we work to fix this issue.
-                        """
-                    )
-                    st.markdown("<script>location.reload(true);</script>", unsafe_allow_html=True)
+            st.error(
+                f"""
+                Sometimes if you try to log multiple transactions or when you leave the
+                Update My Portfolio screen, TradeSocial crashes 😕
+                
+                It's not you, it's us. We are sorry for this inconvenience as this is not
+                the intended experience. If this does happen to you, refreshing the app
+                usually solves the problem.
+                
+                Please  bear with us as we work to fix this issue.
+                """
+            )
+            st.markdown("<script>location.reload(true);</script>", unsafe_allow_html=True)
                 
             if ticker in portfolio:
                 portfolio[ticker].append({'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')})

@@ -9,22 +9,16 @@ import plotly.graph_objs as go
 from helpers.data_manipulation_helpers import DataManipulationHelpers
 from data.configs import STOCK_TICKERS_DICT
 
-# from components.page_components.explore_page_components import (
-#     generate_todays_top_gainers_section,
-#     generate_trending_section,
-#     generate_browse_and_compare_section,
-#     generate_popular_portfolio_stocks_section,
-#     generate_browse_and_compare_section
-# )
+from components.page_components.explore_page_components import (
+    explore_test
+)
 
 dmh__i = DataManipulationHelpers()
 
-# ----- TradeSocial Explore Page -----
-def generate_explore_page():
-    """
-    """
-    st.markdown("# Explore")
-    
+# ----- TradeSocial Explore Page TEST -----
+def generate_explore_2():
+    st.markdown("# Explore TEST")
+    explore_test()
     st.write(
         f"""
         Welcome to the Explore Page! Use this page to stay informed about
@@ -40,10 +34,7 @@ def generate_explore_page():
     
     # search and compare
     if stocks_to_view:
-        generate_browse_and_compare_section(
-            stocks_to_view
-        )
-    
+        st.markdown("YEAH THIS WORKS FOR NOW")
     else:
         gainers_rank_to_filter = 5
         stocks_df = pd.DataFrame(
@@ -66,32 +57,5 @@ def generate_explore_page():
             .head(gainers_rank_to_filter)
             ['ticker'])
         )
-        top_losers_list = (
-            list(gains
-            .sort_values('rank', ascending=False)
-            .head(gainers_rank_to_filter)
-            ['ticker'])
-        )
-        
-        # Best Portfolio Combinations
-        # generate_best_portfolio_combinations_section()
-        
-        # Popular Portolio Stocks
-        generate_popular_portfolio_stocks_section()
-        
-        # Yesterday's Top Gainers
-        generate_todays_top_gainers_section(
-            top_gainers_list,
-            stocks_df,
-            gains,
-            STOCK_TICKERS_DICT
-        )
-        
-        # Trending now
-        generate_trending_section(STOCK_TICKERS_DICT)
-# def generate_explore_page():
-#     st.warning("Under construction 🚧")
-    
-    
-    
-    
+        st.markdown(top_gainers_list)
+            
