@@ -42,7 +42,7 @@ ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LE
 personalization_evolution_note = """
 This feature is powered by AI algorithms and adapts to your preferences and behavior.
 The more you use it, the more tailored and accurate it becomes for you. Your feedback
-and interactions help use continuously enhance its performance.
+and interactions help us continuously enhance its performance.
 """
 
 # TODO: move to data manipulation helpers
@@ -459,8 +459,83 @@ def generate_update_my_portfolio_section():
             with open(users_config_path, 'w') as file:
                 yaml.dump(users_config, file, default_flow_style=False)
             
-            
 
+def generate_portfolio_sells_section(
+    portfolio=portfolio
+):
+    """
+    """
+    portfolio_sells = []
+    portfolio_over_time = calculate_my_portfolio_metrics_over_time()
+    if len(portfolio_over_time) > 0:
+        portfolio_metrics_df = calculate_my_portfolio_metrics()
+        stocks_in_my_portfolio = list(portfolio.keys())
+        long_sells = list(fy_recommendations['sells']['ticker'])
+        quick_sells = list(fy_quick_recommendations['sells']['ticker'])
+        
+        for ticker in stocks_in_my_portfolio:
+            if (ticker in quick_sells) and (ticker in long_sells) and (len(portfolio_sells) < 9):
+                portfolio_sells.append(ticker)
+        
+        st.markdown("## Time to Cash Out")
+        st.markdown("---")
+        st.markdown(
+            f"""
+            We've pinpointed stocks in your portfolio that are likely to decrease
+            in value soon. Now might be the right time to cash out on these stocks
+            to avoid any potential losses.
+            """
+        )
+        
+        portfolio_sells_placeholder_1 = st.empty()
+        portfolio_sells_placeholder_2 = st.empty()
+        
+        if len(portfolio_sells) > 4:
+            with portfolio_sells_placeholder_1.container():
+                portfolio_sells_columns_1 = st.columns(4)
+                for i, ticker in enumerate(portfolio_sells[:4]):
+                    stock_df = portfolio_metrics_df[portfolio_metrics_df['ticker']==ticker]
+                    current_value = list(stock_df['current_value'])[0]
+                    initial_value = list(stock_df['avg_initial_value'])[0]
+                    value_growth = round(100 * (current_value - initial_value)/initial_value, 2)
+                    delta_msg = f"{value_growth}%"
+                    portfolio_sells_columns_1[i].metric(
+                        label=f"Your {ticker} Value",
+                        value=f"${current_value:,.2f}",
+                        delta=f"{delta_msg}",
+                        delta_color = "off"
+                    )
+            
+            with portfolio_sells_placeholder_2.container():
+                portfolio_sells_columns_2 = st.columns(len(portfolio_sells) - 4)
+                for i, ticker in enumerate(portfolio_sells[4:]):
+                    stock_df = portfolio_metrics_df[portfolio_metrics_df['ticker']==ticker]
+                    current_value = list(stock_df['current_value'])[0]
+                    initial_value = list(stock_df['avg_initial_value'])[0]
+                    value_growth = round(100 * (current_value - initial_value)/initial_value, 2)
+                    delta_msg = f"{value_growth}%"
+                    portfolio_sells_columns_2[i].metric(
+                        label=f"Your {ticker} Value",
+                        value=f"${current_value:,.2f}",
+                        delta=f"{delta_msg}",
+                        delta_color = "off"
+                    )
+        else:
+            with portfolio_sells_placeholder_1.container():
+                portfolio_sells_columns_1 = st.columns(4)
+                for i, ticker in enumerate(portfolio_sells[:4]):
+                    stock_df = portfolio_metrics_df[portfolio_metrics_df['ticker']==ticker]
+                    current_value = list(stock_df['current_value'])[0]
+                    initial_value = list(stock_df['avg_initial_value'])[0]
+                    value_growth = round(100 * (current_value - initial_value)/initial_value, 2)
+                    delta_msg = f"{value_growth}%"
+                    portfolio_sells_columns_1[i].metric(
+                        label=f"Your {ticker} Value",
+                        value=f"${current_value:,.2f}",
+                        delta=f"{delta_msg}",
+                        delta_color = "off"
+                    )
+    
 def generate_quick_wins_section(
     portfolio=portfolio,
     buys=True
@@ -685,39 +760,40 @@ def generate_ymal_section(
             """
             Read the following descriptions and choose the risk level that you believe best suits you:
             
-            **Risk Level 1 (Very Conservative)**: You want to participate in the stock market while
-            with as minimal risk as possible. You prefer the safest route with little to no ips and
+            `Risk Level 1 (Very Conservative)`: You want to participate in the stock market
+            with as minimal risk as possible. You prefer the safest route with little to no ups and
             downs in your investment value. Your returns might be small but steady.
             
-            **Risk Levels 2-3 (Conservative)**: You are seeking slightly higher returns while still
+            `Risk Levels 2-3 (Conservative)`: You are seeking slightly higher returns while still
             prioritizing safety. You prefer to play it safe, but you are open to minor fluctuations
             that can increase your portfolio's value.
             
-            **Risk Level 4 (Conservatiley Moderate)**: You are open to some risks for the potential of
+            `Risk Level 4 (Conservatiley Moderate)`: You are open to some risks for the potential of
             higher returns. You want to see some more growth in your investments while still keeping 
             things relatively stable.
             
-            **Risk Level 5 (Moderate)**: You are willing to accept moderate fluctuations for potentially
+            `Risk Level 5 (Moderate)`: You are willing to accept moderate fluctuations for potentially
             higher gains. You are comfortable with the ups and downs, and you undertsand that sometimes
-            you might gain more and other times you might lose more.
+            you might gain more, and other times you might lose more.
             
-            **Risk Levels 6-7 (Moderately Aggressive)**: You are comfortable with significant market exposure.
+            `Risk Levels 6-7 (Moderately Aggressive)`: You are comfortable with significant market exposure.
             You are looking for growth and you are not too worried about the possibility of more frequent
-            fluctuations in your investment value.
+            fluctuations in your investment's value.
             
-            **Risk Level 8 (Aggressive)**: You are seeking substantial growth and you are willing to accept
+            `Risk Level 8 (Aggressive)`: You are seeking substantial growth and you are willing to accept
             high volatility, knowing that you can win big if you strike the right trade. You are comfortable
-            with significant and frequent changes in your investment value, including some losses.
+            with significant and frequent changes in your investment's value, including some losses.
             
-            **Risk Level 9 (Very Aggressive)**: You want to prioritize maximum returns over stability and 
+            `Risk Level 9 (Very Aggressive)`: You want to prioritize maximum returns over stability and 
             you are comfortable with the possibility of substantial losses.
             
-            **Risk Level 10 (Extremely High Risk)**: You want to risk it all. You know the the stock market
+            `Risk Level 10 (Extremely High Risk)`: You want to risk it all. You know the the stock market
             can provide astronomical retruns, and that it can take it all away. You are willing to take part
-            in high-stakes trading in volatile and speculative markets, with the clear understanding that
-            they could either gain or lose significantly.
+            in high-stakes trading within volatile and speculative markets, with the clear understanding that
+            you could either gain or lose significantly.
             """
         )
+        st.markdown("---")
         recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(risk_level)
     else:
         recommendation_dict = ymal_recommendation_dict
@@ -730,7 +806,7 @@ def generate_ymal_section(
     
     ymal_placeholder = st.empty()
     with ymal_placeholder.container():
-        columns = st.columns(len(recommended_stocks))
+        ymal_columns = st.columns(len(recommended_stocks))
         
         for i, ticker in enumerate(recommended_stocks):
             stock_df = gains_df[gains_df['ticker']==ticker]
@@ -738,7 +814,7 @@ def generate_ymal_section(
             current_price = list(stock_df['Close'])[0]
             pct_change = list(stock_df['pct_change'])[0]
             
-            columns[i].metric(
+            ymal_columns[i].metric(
                 label=f"{ticker}",
                 value=f"${current_price:,.2f}",
                 delta=f"{pct_change:,.2f}% DoD",

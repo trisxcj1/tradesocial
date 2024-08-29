@@ -7,7 +7,8 @@ from components.page_components.home_page_components import (
     generate_fy_section,
     generate_ymal_section,
     gen_track_my_portfolio_goal_section,
-    generate_quick_wins_section
+    generate_quick_wins_section,
+    generate_portfolio_sells_section
 )
 
 # ----- TradeSocial Home Page -----
@@ -43,6 +44,9 @@ def generate_home_page():
     
     # YMAL
     generate_ymal_section()
+    
+    # Portfolio Sells (Time to Cash Out)
+    generate_portfolio_sells_section()
     
     # Recommended Sells
     generate_fy_section(fy_buys=False)
