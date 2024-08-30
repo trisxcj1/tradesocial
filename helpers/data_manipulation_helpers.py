@@ -5,6 +5,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import time
+import pytz
 
 import joblib
 import os
@@ -55,9 +56,10 @@ class DataManipulationHelpers():
     ):
         """
         """
-        today = datetime.today()
+        est_tz = pytz.timezone('US/Eastern')
+        today = datetime.now(est_tz)
         market_close =  datetime.strptime('16:30:00', '%H:%M:%S').time()
-        current_time = datetime.now().time()
+        current_time = datetime.now(est_tz).time()
         
         if isinstance(end_date, int):
             end_date = today + relativedelta(days=-end_date)
@@ -73,8 +75,6 @@ class DataManipulationHelpers():
                 end_date = today + relativedelta(days=-1)
                 day_of_week = end_date.weekday()
             
-            # if day_of_week == 0:
-            #     end_date = end_date + relativedelta(days=-3)
             if day_of_week == 6:
                 end_date = end_date + relativedelta(days=-2)
             if day_of_week == 5:
@@ -96,16 +96,11 @@ class DataManipulationHelpers():
             else:
                 start_date = today + relativedelta(days=-1)
                 day_of_week = start_date.weekday()
-            
-            # if day_of_week == 0:
-            #     start_date = start_date + relativedelta(days=-3)
+                
             if day_of_week == 6:
                 start_date = start_date + relativedelta(days=-2)
             if day_of_week == 5:
                 start_date = start_date + relativedelta(days=-1)
-        
-        # if start_date == end_date:
-        #     end_date = start_date + relativedelta(days=1)
         
         for attempt in range(retries):
             try:
