@@ -62,9 +62,9 @@ if st.session_state['authentication_status']==True:
     st.session_state['USER_RISK_LEVEL'] = user_info['risk_level']
 
 if st.session_state['USER_USERNAME'] is None:
-    time.sleep(60)
+    time.sleep(25)
     st.warning("Having trouble?")
-    time.sleep(60)
+    time.sleep(5)
     st.warning("Try refreshing the app")
     
 from app_pages.home_page import generate_home_page
@@ -78,13 +78,6 @@ tradesocial_pages_mapping = {
 tradesocial_pages_menu_items = list(tradesocial_pages_mapping.keys())
 
 if st.session_state['authentication_status']==True:
-    # with open(current_user_config_path, 'w') as current_user_file:
-    #     current_user_file.write(f"USER_USERNAME = '{username}'\n")
-    #     current_user_file.write(f"USER_PORTFOLIO = {user_info['portfolio']}\n")
-    #     current_user_file.write(f"USER_PORTFOLIO_GOAL = {user_info['portfolio_goal']}\n")
-    #     current_user_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{portfolio_goal_date}'\n")
-    #     current_user_file.write(f"USER_RISK_LEVEL = {user_info['risk_level']}")
-    
     with st.sidebar:
         st.markdown("# TradeSocial 💸")
         st.markdown(
@@ -99,6 +92,18 @@ if st.session_state['authentication_status']==True:
         st.markdown('---')
         st.sidebar.write(f'Hi, **{name}**')
         selected_page = st.selectbox('Menu', tradesocial_pages_menu_items)
+        
+        if selected_page == "Ask Me Anything ✨":
+            st.markdown(
+                """
+                <p style="font-size:12px;">
+                TradeSocial Assistant is here to help but can make mistakes.
+                Please verify important information.
+                </p>
+                """,
+                unsafe_allow_html=True
+            )
+        
         authenticator.logout()
 
     # displaying the selected page

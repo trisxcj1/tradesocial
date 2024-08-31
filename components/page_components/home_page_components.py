@@ -42,6 +42,7 @@ portfolio = USER_PORTFOLIO
 fy_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL)['recommended_stocks'] # risk level is not currently being used
 fy_quick_recommendations = dmh__i.claculate_fy_recommended_stocks(USER_RISK_LEVEL, quick_fy=True)['recommended_stocks'] # risk level is not currently being used
 ymal_recommendation_dict = dmh__i.calculate_ymal_recommended_stocks(USER_RISK_LEVEL)
+all_similarities_df = dmh__i.calculate_similarity()
 
 personalization_evolution_note = """
 This feature is powered by AI algorithms and adapts to your preferences and behavior.
@@ -450,12 +451,6 @@ def generate_update_my_portfolio_section():
                 portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
             
             st.session_state['USER_PORTFOLIO'] = portfolio
-            # with open(current_user_config_path, 'w') as current_user_py_file:
-            #     current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
-            #     current_user_py_file.write(f"USER_PORTFOLIO = {portfolio}\n")
-            #     current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {USER_PORTFOLIO_GOAL}\n")
-            #     current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{USER_PORTFOLIO_GOAL_DATE}'\n")
-            #     current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
             
             with open(users_config_path) as file:
                 users_config = yaml.load(file, Loader=SafeLoader)
@@ -550,10 +545,27 @@ def generate_quick_wins_section(
     portfolio_over_time = calculate_my_portfolio_metrics_over_time()
     if len(portfolio_over_time) > 0:
         stocks_in_my_portfolio = list(portfolio.keys())
-        fy = fy_quick_recommendations['buys']
+        fy_recs = fy_quick_recommendations['buys']
         stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
         stocks_in_fy_buys = fy_recommendations['buys']['ticker'][:8]
         stocks_in_fy_sells = fy_recommendations['sells']['ticker'][:8]
+        
+        my_portfolio_similarity_filtered = all_similarities_df[stocks_in_my_portfolio]
+        similar_to_my_portfolio = all_similarities_df.copy()
+        similar_to_my_portfolio['avg_similarity'] = my_portfolio_similarity_filtered.mean(axis=1)
+        similar_to_my_portfolio = (
+            similar_to_my_portfolio
+            .sort_values('avg_similarity', ascending=False)
+            .reset_index()
+            [['ticker', 'avg_similarity']]
+        )
+        
+        fy = (
+            fy_recs
+            .merge(similar_to_my_portfolio, on='ticker', how='inner')
+        )
+        fy['rec_score'] = (0.5 *fy['probability']) + (0.5 * fy['avg_similarity'])
+        fy = fy.sort_values('rec_score', ascending=False)
         
         st.markdown(f"## Your 7-Day Growth Opportunities ✨")
         st.markdown(f"<p style='font-size:12px;'>{personalization_evolution_note}</p>", unsafe_allow_html=True)
@@ -587,7 +599,7 @@ def generate_quick_wins_section(
             for i, ticker in enumerate(recommended_stocks[:4]):
                 stock_df = fy[fy['ticker']==ticker]
                 current_price = list(stock_df['Close'])[0]
-                probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                probability = round(100 * (list(stock_df['rec_score'])[0]), 0)
                 delta_msg = f"{probability}% Match"
                 columns_1[i].metric(
                     label=f"{ticker}",
@@ -600,7 +612,7 @@ def generate_quick_wins_section(
             for i, ticker in enumerate(recommended_stocks[4:]):
                 stock_df = fy[fy['ticker']==ticker]
                 current_price = list(stock_df['Close'])[0]
-                probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                probability = round(100 * (list(stock_df['rec_score'])[0]), 0)
                 delta_msg = f"{probability}% Match"
                 columns_2[i].metric(
                     label=f"{ticker}",
@@ -621,8 +633,8 @@ def generate_fy_section(
     """
     portfolio_over_time = calculate_my_portfolio_metrics_over_time()
     if len(portfolio_over_time) > 0:
-    
         stocks_in_my_portfolio = list(portfolio.keys())
+        
         if fy_buys:
             section_header = 'Recommended Buys For You'
             fy_msg = """
@@ -633,7 +645,8 @@ def generate_fy_section(
             hold them for at least 3 months, the value of your portfolio is 
             expected to increase 🚀
             """
-            fy = fy_recommendations['buys']
+            fy_recs = fy_recommendations['buys']
+            stocks_in_opposite_quick_fy = fy_quick_recommendations['sells']['ticker']
             
         else:
             section_header = 'Strategic Shorts or Sells'
@@ -643,18 +656,38 @@ def generate_fy_section(
             If you short or sell these stocks today, you can minimize the risk of
             any losses you might incur from owning these stocks.
             """
-            fy = fy_recommendations['sells']
-            
+            fy_recs = fy_recommendations['sells']
+            stocks_in_opposite_quick_fy = fy_quick_recommendations['buys']['ticker']
+        
+        my_portfolio_similarity_filtered = all_similarities_df[stocks_in_my_portfolio]
+        similar_to_my_portfolio = all_similarities_df.copy()
+        similar_to_my_portfolio['avg_similarity'] = my_portfolio_similarity_filtered.mean(axis=1)
+        similar_to_my_portfolio = (
+            similar_to_my_portfolio
+            .sort_values('avg_similarity', ascending=False)
+            .reset_index()
+            [['ticker', 'avg_similarity']]
+        )
+        
+        fy = (
+            fy_recs
+            .merge(similar_to_my_portfolio, on='ticker', how='inner')
+        )
+        fy['rec_score'] = (0.7 *fy['probability']) + (0.3 * fy['avg_similarity'])
+        fy = fy.sort_values('rec_score', ascending=False)
+        
         st.markdown(f"## {section_header}")
         st.markdown(f"<p style='font-size:12px;'>{personalization_evolution_note}</p>", unsafe_allow_html=True)
         st.markdown('---')
-        
         st.write(fy_msg)
         
         # deduplicating for stocks that will be in YMAL
         stocks_in_ymal = ymal_recommendation_dict['recommended_stocks']
         recommended_stocks = list(
-            fy[~fy['ticker'].isin(stocks_in_ymal)]
+            fy[
+                (~fy['ticker'].isin(stocks_in_ymal)) &
+                (~fy['ticker'].isin(stocks_in_opposite_quick_fy))
+            ]
             .head(8)
             ['ticker']
         )
@@ -663,14 +696,13 @@ def generate_fy_section(
         
         # showing 2 rows if more than 4 recommended stocks
         if len(recommended_stocks) > 4:
-            
             # row 1 of recomemndations
             with fy_placeholder_1.container():
                 columns_1 = st.columns(4)
                 for i, ticker in enumerate(recommended_stocks[:4]):
                     stock_df = fy[fy['ticker']==ticker]
                     current_price = list(stock_df['Close'])[0]
-                    probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                    probability = round(100 * (list(stock_df['rec_score'])[0]), 0)
                     if fy_buys == False:
                         delta_color = "off"
                         if ticker in stocks_in_my_portfolio:
@@ -693,7 +725,7 @@ def generate_fy_section(
                 for i, ticker in enumerate(recommended_stocks[4:]):
                     stock_df = fy[fy['ticker']==ticker]
                     current_price = list(stock_df['Close'])[0]
-                    probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                    probability = round(100 * (list(stock_df['rec_score'])[0]), 0)
                     if fy_buys == False:
                         delta_color = "off"
                         if ticker in stocks_in_my_portfolio:
@@ -717,7 +749,7 @@ def generate_fy_section(
                 for i, ticker in enumerate(recommended_stocks[:5]):
                     stock_df = fy[fy['ticker']==ticker]
                     current_price = list(stock_df['Close'])[0]
-                    probability = round(100 * (list(stock_df['probability'])[0]), 2)
+                    probability = round(100 * (list(stock_df['rec_score'])[0]), 0)
                     if fy_buys == False:
                         delta_color = "off"
                         if ticker in stocks_in_my_portfolio:
