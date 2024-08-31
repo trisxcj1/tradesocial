@@ -35,7 +35,8 @@ def generate_ama_chat_bot():
     for message in st.session_state.messages[1:]:
         st.chat_message(message['role']).write(message['content'])
     
-    if user_input_message := st.chat_input(key='general-user-input'):
+        
+    if user_input_message := st.chat_input("Message TradeSocial Assistant...", key='general-user-input'):
         st.session_state.messages.append({'role': 'user', 'content': user_input_message})
         st.chat_message('user').write(user_input_message)
         
