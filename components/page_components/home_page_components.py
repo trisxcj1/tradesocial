@@ -3,6 +3,7 @@ import math
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
 
 import os
 from dotenv import load_dotenv
@@ -19,13 +20,16 @@ from helpers.data_manipulation_helpers import DataManipulationHelpers
 from data.configs import (
     STOCK_TICKERS_DICT
 )
-from app_secrets.current_user_config import (
-    USER_USERNAME,
-    USER_PORTFOLIO,
-    USER_RISK_LEVEL,
-    USER_PORTFOLIO_GOAL,
-    USER_PORTFOLIO_GOAL_DATE
-)
+
+USER_USERNAME=st.session_state['USER_USERNAME']
+if USER_USERNAME is None:
+    time.sleep(5)
+    st.rerun()
+
+USER_PORTFOLIO=st.session_state['USER_PORTFOLIO']
+USER_RISK_LEVEL=st.session_state['USER_RISK_LEVEL']
+USER_PORTFOLIO_GOAL=st.session_state['USER_PORTFOLIO_GOAL']
+USER_PORTFOLIO_GOAL_DATE=st.session_state['USER_PORTFOLIO_GOAL_DATE']
 
 dmh__i = DataManipulationHelpers()
 
@@ -142,12 +146,14 @@ def update_my_goal(
             submit_button = st.form_submit_button(label='Save New Goal')
             
             if submit_button:
-                with open(current_user_config_path, 'w') as current_user_py_file:
-                    current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
-                    current_user_py_file.write(f"USER_PORTFOLIO = {USER_PORTFOLIO}\n")
-                    current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {new_goal_amount}\n")
-                    current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{new_goal_date}'\n")
-                    current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
+                st.session_state['USER_PORTFOLIO_GOAL'] = new_goal_amount
+                st.session_state['USER_PORTFOLIO_GOAL_DATE'] = new_goal_date
+                # with open(current_user_config_path, 'w') as current_user_py_file:
+                #     current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
+                #     current_user_py_file.write(f"USER_PORTFOLIO = {USER_PORTFOLIO}\n")
+                #     current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {new_goal_amount}\n")
+                #     current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{new_goal_date}'\n")
+                #     current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
                 
                 with open(current_user_config_path) as file:
                     users_config = yaml.load(file, Loader=SafeLoader)
@@ -381,8 +387,7 @@ def generate_my_portfolio_section():
 
 def generate_update_my_portfolio_section():
     st.markdown("### Update My Portfolio")
-    stock_association_rules = dmh__i.gen_association_rules()
-    
+    # stock_association_rules = dmh__i.gen_association_rules()
     st.error(
         f"""
         **NOTE**: TradeSocial currently does not have the functionality to support the actual
@@ -444,13 +449,13 @@ def generate_update_my_portfolio_section():
             else:
                 portfolio[ticker] = [{'quantity': quantity, 'transaction_date': transaction_date.strftime('%Y-%m-%d')}]
             
-            with open(current_user_config_path, 'w') as current_user_py_file:
-                current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
-                current_user_py_file.write(f"USER_PORTFOLIO = {portfolio}\n")
-                current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {USER_PORTFOLIO_GOAL}\n")
-                current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{USER_PORTFOLIO_GOAL_DATE}'\n")
-                current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
-            
+            st.session_state['USER_PORTFOLIO'] = portfolio
+            # with open(current_user_config_path, 'w') as current_user_py_file:
+            #     current_user_py_file.write(f"USER_USERNAME = '{USER_USERNAME}'\n")
+            #     current_user_py_file.write(f"USER_PORTFOLIO = {portfolio}\n")
+            #     current_user_py_file.write(f"USER_PORTFOLIO_GOAL = {USER_PORTFOLIO_GOAL}\n")
+            #     current_user_py_file.write(f"USER_PORTFOLIO_GOAL_DATE = '{USER_PORTFOLIO_GOAL_DATE}'\n")
+            #     current_user_py_file.write(f"USER_RISK_LEVEL = {USER_RISK_LEVEL}")
             
             with open(users_config_path) as file:
                 users_config = yaml.load(file, Loader=SafeLoader)
