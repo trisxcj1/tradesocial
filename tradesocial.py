@@ -4,6 +4,8 @@ st.set_page_config(page_title='TradeSocial 💸')
 
 import streamlit_authenticator as stauth
 
+import time 
+
 import yaml
 from yaml.loader import SafeLoader
 import os
@@ -58,6 +60,12 @@ if st.session_state['authentication_status']==True:
     st.session_state['USER_PORTFOLIO_GOAL'] = user_info['portfolio_goal']
     st.session_state['USER_PORTFOLIO_GOAL_DATE'] = portfolio_goal_date
     st.session_state['USER_RISK_LEVEL'] = user_info['risk_level']
+
+if st.session_state['USER_USERNAME'] is None:
+    time.sleep(60)
+    st.warning("Having trouble?")
+    time.sleep(60)
+    st.warning("Try refreshing the app")
     
 from app_pages.home_page import generate_home_page
 
